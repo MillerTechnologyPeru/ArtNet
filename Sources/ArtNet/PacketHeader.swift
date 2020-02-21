@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  PacketHeader.swift
 //  
 //
 //  Created by Alsey Coleman Miller on 2/21/20.
@@ -18,6 +18,23 @@ internal struct ArtNetHeader: Codable, Equatable, Hashable {
     let opCode: OpCode
 }
 
+extension ArtNetHeader {
+    
+    enum CodingKeys: String, ArtNetCodingKey {
+        
+        case id
+        case opCode
+        
+        var isLittleEndian: Bool {
+            switch self {
+            case .opCode:
+                return true
+            default:
+                return false
+            }
+        }
+    }
+}
 
 // MARK: - Supporting Types
 
