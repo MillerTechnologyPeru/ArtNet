@@ -6,7 +6,7 @@
 //
 
 /// ArtNet OpCode
-public enum OpCode: UInt16 {
+public enum OpCode: UInt16, Codable {
     
     /// This is an ArtPoll packet, no other data is contained in this UDP packet.
     case poll                   = 0x2000

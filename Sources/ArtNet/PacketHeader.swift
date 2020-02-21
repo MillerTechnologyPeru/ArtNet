@@ -7,7 +7,7 @@
 
 import Foundation
 
-internal struct ArtNetHeader {
+internal struct ArtNetHeader: Codable, Equatable, Hashable {
     
     /// Array of 8 characters, the final character is a null termination.
     ///
@@ -19,7 +19,6 @@ internal struct ArtNetHeader {
 }
 
 
-
 // MARK: - Supporting Types
 
 internal extension ArtNetHeader {
@@ -27,7 +26,7 @@ internal extension ArtNetHeader {
     /// Array of 8 characters, the final character is a null termination.
     ///
     /// Value = `‘A’ ‘r’ ‘t’ ‘-‘ ‘N’ ‘e’ ‘t’ 0x00`
-    struct ID: RawRepresentable, Equatable, Hashable {
+    struct ID: RawRepresentable, Equatable, Hashable, Codable {
         
         let rawValue: String
         
