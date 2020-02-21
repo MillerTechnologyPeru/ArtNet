@@ -9,4 +9,12 @@ public protocol ArtNetPacket {
     
     /// The opcode of the packet.
     static var opCode: OpCode { get }
+    
+    /// Formatting options for encoding.
+    static var formatting: ArtNetFormatting { get }
+}
+
+public extension ArtNetPacket {
+    
+    static var formatting: ArtNetFormatting { .init() }
 }

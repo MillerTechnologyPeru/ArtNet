@@ -59,7 +59,7 @@ public extension ArtNetFormatting {
     /// Formatting options for Data
     enum DataFormatting {
         
-        /// The data is prefixed by a little endian 16 bit length specifier
+        /// The data is prefixed by a 16 bit length specifier.
         case lengthSpecifier
         
         /// The remaining bytes are treated as data.

@@ -14,26 +14,15 @@ internal struct ArtNetHeader: Codable, Equatable, Hashable {
     /// Value = `‘A’ ‘r’ ‘t’ ‘-‘ ‘N’ ‘e’ ‘t’ 0x00`
     let id: ID
     
-    /// Opcode of
+    /// Opcode of the packet.
     let opCode: OpCode
 }
 
-extension ArtNetHeader {
+internal extension ArtNetHeader {
     
-    enum CodingKeys: String, ArtNetCodingKey {
-        
-        case id
-        case opCode
-        
-        var isLittleEndian: Bool {
-            switch self {
-            case .opCode:
-                return true
-            default:
-                return false
-            }
-        }
-    }
+    static let formatting = ArtNetFormatting(
+        littleEndian: [ArtNetHeader.CodingKeys.opCode]
+    )
 }
 
 // MARK: - Supporting Types
