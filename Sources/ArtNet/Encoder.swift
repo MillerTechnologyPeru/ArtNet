@@ -90,20 +90,20 @@ internal extension ArtNetEncoder {
         func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key : CodingKey {
             
             log?("Requested container keyed by \(type.sanitizedName) for path \"\(codingPath.path)\"")
-            let keyedContainer = ArtNetKeyedContainer<Key>(referencing: self, wrapping: stackContainer)
+            let keyedContainer = ArtNetKeyedContainer<Key>(referencing: self)
             return KeyedEncodingContainer(keyedContainer)
         }
         
         func unkeyedContainer() -> UnkeyedEncodingContainer {
             
             log?("Requested unkeyed container for path \"\(codingPath.path)\"")
-            return ArtNetUnkeyedEncodingContainer(referencing: self, wrapping: stackContainer)
+            return ArtNetUnkeyedEncodingContainer(referencing: self)
         }
         
         func singleValueContainer() -> SingleValueEncodingContainer {
             
             log?("Requested single value container for path \"\(codingPath.path)\"")
-            return ArtNetSingleValueEncodingContainer(referencing: self, wrapping: stackContainer)
+            return ArtNetSingleValueEncodingContainer(referencing: self)
         }
     }
 }
@@ -165,6 +165,143 @@ private extension ArtNetEncoder.Encoder {
         case .remainder:
             return data
         }
+    }
+}
+
+
+// MARK: - KeyedEncodingContainerProtocol
+
+internal struct ArtNetKeyedContainer <K : CodingKey> : KeyedEncodingContainerProtocol {
+    
+    typealias Key = K
+    
+    // MARK: - Properties
+    
+    /// A reference to the encoder we're writing to.
+    let encoder: ArtNetEncoder.Encoder
+    
+    /// The path of coding keys taken to get to this point in encoding.
+    let codingPath: [CodingKey]
+    
+    // MARK: - Initialization
+    
+    init(referencing encoder: ArtNetEncoder.Encoder) {
+        
+        self.encoder = encoder
+        self.codingPath = encoder.codingPath
+    }
+    
+    // MARK: - Methods
+    
+    func encodeNil(forKey key: K) throws {
+        // do nothing
+    }
+    
+    func encode(_ value: Bool, forKey key: K) throws {
+        try encodeArtNet(value, forKey: key)
+    }
+    
+    func encode(_ value: Int, forKey key: K) throws {
+        try encodeNumeric(Int32(value), forKey: key)
+    }
+    
+    func encode(_ value: Int8, forKey key: K) throws {
+        try encodeArtNet(value, forKey: key)
+    }
+    
+    func encode(_ value: Int16, forKey key: K) throws {
+        try encodeNumeric(value, forKey: key)
+    }
+    
+    func encode(_ value: Int32, forKey key: K) throws {
+        try encodeNumeric(value, forKey: key)
+    }
+    
+    func encode(_ value: Int64, forKey key: K) throws {
+        try encodeNumeric(value, forKey: key)
+    }
+    
+    func encode(_ value: UInt, forKey key: K) throws {
+        try encodeNumeric(UInt32(value), forKey: key)
+    }
+    
+    func encode(_ value: UInt8, forKey key: K) throws {
+        try encodeArtNet(value, forKey: key)
+    }
+    
+    func encode(_ value: UInt16, forKey key: K) throws {
+        try encodeNumeric(value, forKey: key)
+    }
+    
+    func encode(_ value: UInt32, forKey key: K) throws {
+        try encodeNumeric(value, forKey: key)
+    }
+    
+    func encode(_ value: UInt64, forKey key: K) throws {
+        try encodeNumeric(value, forKey: key)
+    }
+    
+    func encode(_ value: Float, forKey key: K) throws {
+        try encodeNumeric(value.bitPattern, forKey: key)
+    }
+    
+    func encode(_ value: Double, forKey key: K) throws {
+        try encodeNumeric(value.bitPattern, forKey: key)
+    }
+    
+    func encode(_ value: String, forKey key: K) throws {
+        try encodeArtNet(value, forKey: key)
+    }
+    
+    func encode <T: Encodable> (_ value: T, forKey key: K) throws {
+        
+        self.encoder.codingPath.append(key)
+        defer { self.encoder.codingPath.removeLast() }
+        encoder.log?("Will encode value for key \(key.stringValue) at path \"\(encoder.codingPath.path)\"")
+        try encoder.writeEncodable(value, for: key)
+    }
+    
+    func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
+        
+        fatalError()
+    }
+    
+    func nestedUnkeyedContainer(forKey key: K) -> UnkeyedEncodingContainer {
+        
+        fatalError()
+    }
+    
+    func superEncoder() -> Encoder {
+        
+        fatalError()
+    }
+    
+    func superEncoder(forKey key: K) -> Encoder {
+        
+        fatalError()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func encodeNumeric <T: ArtNetRawEncodable & FixedWidthInteger> (_ value: T, forKey key: K) throws {
+        
+        self.encoder.codingPath.append(key)
+        defer { self.encoder.codingPath.removeLast() }
+        let data = encoder.boxNumeric(value, for: key)
+        try setValue(value, data: data, for: key)
+    }
+    
+    private func encodeArtNet <T: ArtNetRawEncodable> (_ value: T, forKey key: K) throws {
+        
+        self.encoder.codingPath.append(key)
+        defer { self.encoder.codingPath.removeLast() }
+        let data = encoder.box(value)
+        try setValue(value, data: data, for: key)
+    }
+    
+    private func setValue <T> (_ value: T, data: Data, for key: Key) throws {
+        encoder.log?("Will encode value for key \(key.stringValue) at path \"\(encoder.codingPath.path)\"")
+        self.encoder.write(data)
     }
 }
 
