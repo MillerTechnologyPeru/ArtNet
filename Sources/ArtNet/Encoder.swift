@@ -110,6 +110,10 @@ internal extension ArtNetEncoder {
 
 internal extension ArtNetEncoder.Encoder {
     
+    func write(_ data: Data) {
+        self.data.append(data)
+    }
+    
     @inline(__always)
     func box <T: ArtNetRawEncodable> (_ value: T) -> Data {
         return value.binaryData
@@ -133,30 +137,36 @@ internal extension ArtNetEncoder.Encoder {
         return boxNumeric(float.bitPattern, for: key)
     }
     
-    func boxEncodable <T: Encodable> (_ value: T) throws -> Data {
+    func writeEncodable <T: Encodable, K: CodingKey> (_ value: T, for key: K) throws {
         
         if let data = value as? Data {
-            return boxData(data)
-        } else if let tlvEncodable = value as? ArtNetEncodable {
-            return tlvEncodable.artNet
+            write(boxData(data, for: key))
+        } else if let encodable = value as? ArtNetEncodable {
+            write(encodable.artNet)
         } else {
-            // encode using Encodable, should push new container.
+            // encode using Encodable, container should write directly.
             try value.encode(to: self)
-            //let nestedContainer = stack.pop()
-            //return nestedContainer.data
-            fatalError()
         }
     }
 }
 
 private extension ArtNetEncoder.Encoder {
     
-    func boxData(_ data: Data) -> Data {
+    func boxData <K: CodingKey> (_ data: Data, for key: K) -> Data {
         
+        let dataFormatting = formatting.data[.init(key)] ?? .lengthSpecifier
         
+        switch dataFormatting {
+        case .lengthSpecifier:
+            var data = Data(capacity: 2 + data.count)
+            let length = UInt16(data.count)
+            data.append(length.binaryData)
+            data.append(data)
+        case .remainder:
+            return data
+        }
     }
 }
-
 
 // MARK: - Data Types
 
@@ -253,6 +263,6 @@ extension Bool: ArtNetRawEncodable {
 extension String: ArtNetRawEncodable {
     
     public var binaryData: Data {
-        return Data(self.utf8)
+        return Data(unsafeBitCast(self.utf8CString, to: ContiguousArray<UInt8>.self))
     }
 }
