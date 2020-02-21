@@ -46,16 +46,16 @@ public extension Poll {
         /// Send ArtPollReply whenever Node conditions change.
         /// This selection allows the Controller to be informed of changes without the need to continuously poll.
         /// If not set, then only send ArtPollReply in response to an ArtPoll or ArtAddress.
-        case replyWithoutPolling            = 0b0000001
+        case replyWithoutPolling            = 0b00000001
         
         /// Send me diagnostics messages.
-        case diagnostics                    = 0b0000010
+        case diagnostics                    = 0b00000010
         
         /// Diagnostics messages are unicast.
         /// If not set, diagnostics messages are broadcast.
-        case unicastDiagnostics             = 0b0000100
+        case unicastDiagnostics             = 0b00000100
         
         /// Disable VLC transmission. If not set then VLC transmission is enabled.
-        case disableVLC                     = 0b0001000
+        case disableVLC                     = 0b00001000
     }
 }
