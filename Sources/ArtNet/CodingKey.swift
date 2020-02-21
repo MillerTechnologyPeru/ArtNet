@@ -5,16 +5,6 @@
 //  Created by Alsey Coleman Miller on 2/21/20.
 //
 
-public protocol ArtNetCodingKey: CodingKey {
-    
-    var isLittleEndian: Bool { get }
-}
-
-public extension ArtNetCodingKey {
-    
-    var isLittleEndian: Bool { return false }
-}
-
 internal extension Sequence where Element == CodingKey {
     
     /// KVC path string for current coding path.
