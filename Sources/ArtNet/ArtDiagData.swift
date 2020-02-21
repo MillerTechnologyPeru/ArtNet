@@ -16,6 +16,8 @@ public struct DiagnosticData: Equatable, Hashable, Codable {
 
 public typealias ArtDiagData = DiagnosticData
 
+// MARK: - Supporting Types
+
 /// Diagnostics Priority codes
 public enum DiagnosticPriority: UInt8, Codable, CaseIterable {
     

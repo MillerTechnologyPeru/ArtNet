@@ -33,3 +33,4 @@ public enum Style: UInt8, CaseIterable, Codable {
     /// A visualiser.
     case visualizer     = 0x06
 }
+
