@@ -21,7 +21,7 @@ import Foundation
  If there are multiple controllers requesting diagnostics, diagnostics shall be broadcast. (Ignore ArtPoll->TalkToMe->3).
  The lowest minimum value of Priority shall be used. (Ignore ArtPoll->Priority).
  */
-public struct Poll: Equatable, Hashable, Codable {
+public struct Poll: ArtNetPacket, Equatable, Hashable, Codable {
     
     /// ArtNet packet code.
     public static var opCode: OpCode { return .poll }
@@ -34,9 +34,18 @@ public struct Poll: Equatable, Hashable, Codable {
     
     /// The lowest priority of diagnostics message that should be sent.
     public var priority: DiagnosticPriority
+    
+    public init(protocolVersion: ProtocolVersion = .current,
+                behavior: BitMaskOptionSet<Behavior> = [],
+                priority: DiagnosticPriority = .low) {
+        
+        self.protocolVersion = protocolVersion
+        self.behavior = behavior
+        self.priority = priority
+    }
 }
 
-public typealias ArtPoll = Poll
+public typealias ArtPoll = Poll // name in specs
 
 public extension Poll {
     

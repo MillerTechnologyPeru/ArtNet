@@ -10,7 +10,7 @@
  
  This packet is also broadcast to the Directed Broadcast address by all Art-Net devices on power up.
  */
-public struct PollReply: Equatable, Hashable, Codable {
+public struct PollReply: ArtNetPacket, Equatable, Hashable, Codable {
     
     /// ArtNet packet code.
     public static var opCode: OpCode { return .pollReply }
@@ -57,6 +57,10 @@ public struct PollReply: Equatable, Hashable, Codable {
     /// This field can be interpreted as two ASCII bytes representing the manufacturer initials.
     //public var estaCode:
 }
+
+public typealias ArtPollReply = PollReply // name in specs
+
+
 
 // MARK: - Supporting Types
 
