@@ -142,13 +142,13 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     public var remote: BinaryArray
     
     /// Not used, set to zero
-    internal let spare1: UInt8 = 0
+    internal let spare1: UInt8
     
     /// Not used, set to zero
-    internal let spare2: UInt8 = 0
+    internal let spare2: UInt8
     
     /// Not used, set to zero
-    internal let spare3: UInt8 = 0
+    internal let spare3: UInt8
     
     /// The Style code defines the equipment style of the device.
     public var style: Style
@@ -221,6 +221,9 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
         self.status2 = status2
         self.port = 0x1936
         self.video = false
+        self.spare1 = 0
+        self.spare2 = 0
+        self.spare3 = 0
         self.filler = Data(repeating: 0x00, count: 26)
     }
 }
