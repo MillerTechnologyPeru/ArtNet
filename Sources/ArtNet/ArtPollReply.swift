@@ -171,7 +171,8 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     
     // MARK: - Initialization
     
-    public init(firmwareVersion: UInt16 = 0,
+    public init(address: Address.IPv4,
+                firmwareVersion: UInt16 = 0,
                 netSwitch: UInt8 = 0,
                 subSwitch: UInt8 = 0,
                 oem: OEMCode,
@@ -186,6 +187,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
                 inputStatus: ChannelArray<BitMaskOptionSet<InputStatus>> = [],
                 outputStatus: ChannelArray<BitMaskOptionSet<OutputStatus>> = [],
                 inputAddresses: ChannelArray<PortAddress> = [],
+                outputAddresses: ChannelArray<PortAddress> = [],
                 macro: BinaryArray = false,
                 remote: BinaryArray = false,
                 style: Style = .node,
@@ -194,6 +196,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
                 bindIndex: UInt8 = 0,
                 status2: BitMaskOptionSet<Status2> = []) {
         
+        self.address = address
         self.firmwareVersion = firmwareVersion
         self.netSwitch = netSwitch
         self.subSwitch = subSwitch
@@ -209,6 +212,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
         self.inputStatus = inputStatus
         self.outputStatus = outputStatus
         self.inputAddresses = inputAddresses
+        self.outputAddresses = outputAddresses
         self.macro = macro
         self.remote = remote
         self.style = style

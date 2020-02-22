@@ -5,8 +5,6 @@
 //  Created by Alsey Coleman Miller on 2/13/20.
 //
 
-import Foundation
-
 /**
  The ArtPoll packet is used to discover the presence of other Controllers, Nodes and Media Servers. The ArtPoll packet is only sent by a Controller. Both Controllers and Nodes respond to the packet.
  

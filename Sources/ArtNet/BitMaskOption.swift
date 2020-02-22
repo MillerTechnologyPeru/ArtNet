@@ -50,30 +50,25 @@ public struct BitMaskOptionSet <Element: BitMaskOption>: RawRepresentable {
     
     @inline(__always)
     public init(rawValue: RawValue) {
-        
         self.rawValue = rawValue
     }
     
     @inline(__always)
     public init() {
-        
         self.rawValue = 0
     }
     
     public static var all: BitMaskOptionSet<Element> {
-        
         return BitMaskOptionSet<Element>(rawValue: Element.allCases.rawValue)
     }
     
     @inline(__always)
     public mutating func insert(_ element: Element) {
-        
         rawValue = rawValue | element.rawValue
     }
     
     @discardableResult
     public mutating func remove(_ element: Element) -> Bool {
-        
         guard contains(element) else { return false }
         rawValue = rawValue & ~element.rawValue
         return true
@@ -81,20 +76,17 @@ public struct BitMaskOptionSet <Element: BitMaskOption>: RawRepresentable {
     
     @inline(__always)
     public mutating func removeAll() {
-        
         self.rawValue = 0
     }
     
     @inline(__always)
     public func contains(_ element: Element) -> Bool {
-        
         return element.isContained(in: rawValue)
     }
     
     public func contains <S: Sequence> (_ other: S) -> Bool where S.Iterator.Element == Element {
         
         for element in other {
-            
             guard element.isContained(in: rawValue)
                 else { return false }
         }
@@ -103,12 +95,10 @@ public struct BitMaskOptionSet <Element: BitMaskOption>: RawRepresentable {
     }
     
     public var count: Int {
-        
         return Element.allCases.reduce(0, { $0 + ($1.isContained(in: rawValue) ? 1 : 0) })
     }
     
     public var isEmpty: Bool {
-        
         return rawValue == 0
     }
 }
@@ -134,7 +124,6 @@ extension BitMaskOptionSet: Codable where RawValue: Codable {
 public extension BitMaskOptionSet {
     
     init<S: Sequence>(_ sequence: S) where S.Iterator.Element == Element {
-        
         self.rawValue = sequence.rawValue
     }
 }
@@ -144,7 +133,6 @@ public extension BitMaskOptionSet {
 extension BitMaskOptionSet: Equatable {
     
     public static func == (lhs: BitMaskOptionSet, rhs: BitMaskOptionSet) -> Bool {
-        
         return lhs.rawValue == rhs.rawValue
     }
 }
@@ -167,12 +155,10 @@ extension BitMaskOptionSet: Hashable {
     
     #if swift(>=4.2)
     public func hash(into hasher: inout Hasher) {
-        
         rawValue.hash(into: &hasher)
     }
     #else
     public var hashValue: Int {
-        
         return rawValue.hashValue
     }
     #endif
@@ -183,7 +169,6 @@ extension BitMaskOptionSet: Hashable {
 extension BitMaskOptionSet: ExpressibleByArrayLiteral {
     
     public init(arrayLiteral elements: Element...) {
-        
         self.init(elements)
     }
 }
@@ -203,7 +188,6 @@ extension BitMaskOptionSet: ExpressibleByIntegerLiteral {
 extension BitMaskOptionSet: Sequence {
     
     public func makeIterator() -> IndexingIterator<[Element]> {
-        
         return Element.from(rawValue: rawValue).makeIterator()
     }
 }

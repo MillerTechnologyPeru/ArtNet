@@ -71,13 +71,13 @@ final class ArtNetTests: XCTestCase {
             outputStatus: [[.dataTransmitted]],
             inputAddresses: [0x01],
             outputAddresses: [0x01],
-            video: false,
             macro: [true, false, true],
             remote: [false, true],
             style: .node,
             macAddress: MacAddress(rawValue: "00:1A:7D:DA:71:13")!,
             bindAddress: .zero,
-            bindIndex: 0
+            bindIndex: 0,
+            status2: []
         )
         
         XCTAssertEqual(value, value, "Equatable is not working")

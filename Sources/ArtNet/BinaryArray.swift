@@ -141,3 +141,13 @@ extension BinaryArray: ExpressibleByDictionaryLiteral {
         }
     }
 }
+
+// MARK: - ExpressibleByBooleanLiteral
+
+extension BinaryArray: ExpressibleByBooleanLiteral {
+    
+    public init(booleanLiteral value: Bool) {
+        self.init()
+        indices.forEach { self[$0] = value }
+    }
+}
