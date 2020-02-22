@@ -46,7 +46,7 @@ public extension MacAddress {
 
 public extension MacAddress {
     
-    internal static var length: Int { return 6 }
+    static var length: Int { return 6 }
     
     init?(data: Data) {
         

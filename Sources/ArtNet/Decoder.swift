@@ -26,7 +26,7 @@ public struct ArtNetDecoder {
     
     public func decode<T>(_ type: T.Type, from data: Data) throws -> T where T: Decodable, T: ArtNetPacket {
         
-        log?("Will decode \(T.opCode)")
+        log?("Will decode \(T.opCode) packet")
         
         guard data.count > 10 else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [], debugDescription: "Insufficient bytes (\(data.count))"))
@@ -72,15 +72,15 @@ internal extension ArtNetDecoder {
         
         /// Any contextual information set by the user for decoding.
         let userInfo: [CodingUserInfoKey : Any]
-                
+        
         /// Logger
         let log: ((String) -> ())?
-                
-        /// Input formatting
-        let formatting: ArtNetFormatting
         
-        /// Input Data
-        let data: Data
+        public let data: Data
+        
+        public fileprivate(set) var offset: Int = 0
+        
+        public let formatting: ArtNetFormatting
         
         // MARK: - Initialization
         
@@ -88,7 +88,7 @@ internal extension ArtNetDecoder {
              userInfo: [CodingUserInfoKey : Any],
              log: ((String) -> ())?,
              formatting: ArtNetFormatting,
-             data: Data = Data()) {
+             data: Data) {
             
             self.codingPath = codingPath
             self.userInfo = userInfo
@@ -120,4 +120,239 @@ internal extension ArtNetDecoder {
             fatalError()
         }
     }
+}
+
+// MARK: - Unboxing Values
+
+internal extension ArtNetDecoder.Decoder {
+    
+    func read(_ bytes: Int) throws -> Data {
+        let start = offset
+        let end = offset + bytes
+        guard self.data.count >= end else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: self.codingPath, debugDescription: "Insufficient bytes (\(data.count)), expected \(end) bytes"))
+        }
+        offset = end // new offset
+        return self.data.subdataNoCopy(in: start ..< end)
+    }
+    
+    func read <T: ArtNetRawDecodable> (type: T.Type) throws -> T {
+        
+        let offset = self.offset
+        let data = try read(T.binaryLength)
+        guard let value = T.init(binaryData: data) else {
+            throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not parse \(type) from \(data) at offset \(offset)"))
+        }
+        
+        return value
+    }
+    
+    func readString() throws -> String {
+        
+        let offset = self.offset
+        let key = self.codingPath.last
+        let encoding = key.flatMap { formatting.string[.init($0)] } ?? .variableLength
+        let length: Int
+        // get string indices in data
+        switch encoding {
+        case .variableLength:
+            guard let end = self.data.suffixNoCopy(from: offset)
+                .firstIndex(of: 0x00)
+                else {
+                throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: self.codingPath, debugDescription: "Missing null terminator for string starting at offset \(offset)"))
+            }
+            length = end - offset
+        case let .fixedLength(fixedLength):
+            length = fixedLength
+        }
+        // read data and parse string
+        let data = try read(length)
+        guard let string = data.withUnsafeBytes({
+            $0.baseAddress.flatMap { String(validatingUTF8: $0.assumingMemoryBound(to: CChar.self)) }
+        }) else {
+            let invalidString = data.withUnsafeBytes({
+                $0.baseAddress.flatMap { String(cString: $0.assumingMemoryBound(to: CChar.self)) } ?? ""
+            })
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: self.codingPath, debugDescription: "Invalid string \"\(invalidString)\" at offset \(offset)"))
+        }
+        return string
+    }
+    
+    func readNumeric <T: ArtNetRawDecodable & FixedWidthInteger> (_ data: Data, as type: T.Type) throws -> T {
+        
+        var numericValue = try unbox(data, as: type)
+        switch options.numericFormatting {
+        case .bigEndian:
+            numericValue = T.init(bigEndian: numericValue)
+        case .littleEndian:
+            numericValue = T.init(littleEndian: numericValue)
+        }
+        return numericValue
+    }
+    
+    func unboxDouble(_ data: Data) throws -> Double {
+        let bitPattern = try unboxNumeric(data, as: UInt64.self)
+        return Double(bitPattern: bitPattern)
+    }
+    
+    func unboxFloat(_ data: Data) throws -> Float {
+        let bitPattern = try unboxNumeric(data, as: UInt32.self)
+        return Float(bitPattern: bitPattern)
+    }
+    
+    /// Attempt to decode native value to expected type.
+    func unboxDecodable <T: Decodable> (_ item: TLVItem, as type: T.Type) throws -> T {
+        
+        // override for native types
+        if type == Data.self {
+            return item.value as! T // In this case T is Data
+        } else if type == UUID.self {
+            return try unboxUUID(item.value) as! T
+        } else if type == Date.self {
+            return try unboxDate(item.value) as! T
+        } else if let tlvCodable = type as? TLVCodable.Type {
+            guard let value = tlvCodable.init(binaryData: item.value) else {
+                throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "Invalid data for \(String(reflecting: type))"))
+            }
+            return value as! T
+        } else {
+            // push container to stack and decode using Decodable implementation
+            stack.push(.item(item))
+            let decoded = try T(from: self)
+            stack.pop()
+            return decoded
+        }
+    }
+}
+
+private extension ArtNetDecoder.Decoder {
+    
+    
+}
+
+// MARK: - Decodable Types
+
+/// Private protocol for decoding TLV values into raw data.
+internal protocol ArtNetRawDecodable {
+    
+    init?(binaryData data: Data)
+    
+    static var binaryLength: Int { get }
+}
+
+extension Bool: ArtNetRawDecodable {
+    
+    public init?(binaryData data: Data) {
+        
+        guard data.count == binaryLength
+            else { return nil }
+        
+        self = data[0] != 0
+    }
+    
+    public static var binaryLength: Int { return MemoryLayout<UInt8>.size }
+}
+
+extension UInt8: ArtNetRawDecodable {
+    
+    public init?(binaryData data: Data) {
+        
+        guard data.count == MemoryLayout<UInt8>.size
+            else { return nil }
+        
+        self = data[0]
+    }
+    
+    public static var binaryLength: Int { return MemoryLayout<UInt8>.size }
+}
+
+extension UInt16: ArtNetRawDecodable {
+    
+    public init?(binaryData data: Data) {
+        
+        guard data.count == MemoryLayout<UInt16>.size
+            else { return nil }
+        
+        self.init(bytes: (data[0], data[1]))
+    }
+    
+    public static var binaryLength: Int { return MemoryLayout<UInt16>.size }
+}
+
+extension UInt32: ArtNetRawDecodable {
+    
+    public init?(binaryData data: Data) {
+        
+        guard data.count == MemoryLayout<UInt32>.size
+            else { return nil }
+        
+        self.init(bytes: (data[0], data[1], data[2], data[3]))
+    }
+    
+    public static var binaryLength: Int { return MemoryLayout<UInt32>.size }
+}
+
+extension UInt64: ArtNetRawDecodable {
+    
+    public init?(binaryData data: Data) {
+        
+        guard data.count == MemoryLayout<UInt64>.size
+            else { return nil }
+        
+        self.init(bytes: (data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]))
+    }
+    
+    public static var binaryLength: Int { return MemoryLayout<UInt64>.size }
+}
+
+extension Int8: ArtNetRawDecodable {
+    
+    public init?(binaryData data: Data) {
+        
+        guard data.count == MemoryLayout<Int8>.size
+            else { return nil }
+        
+        self = Int8(bitPattern: data[0])
+    }
+    
+    public static var binaryLength: Int { return MemoryLayout<Int8>.size }
+}
+
+extension Int16: ArtNetRawDecodable {
+    
+    public init?(binaryData data: Data) {
+        
+        guard data.count == MemoryLayout<Int16>.size
+            else { return nil }
+        
+        self.init(bytes: (data[0], data[1]))
+    }
+    
+    public static var binaryLength: Int { return MemoryLayout<Int16>.size }
+}
+
+extension Int32: ArtNetRawDecodable {
+    
+    public init?(binaryData data: Data) {
+        
+        guard data.count == MemoryLayout<Int32>.size
+            else { return nil }
+        
+        self.init(bytes: (data[0], data[1], data[2], data[3]))
+    }
+    
+    public static var binaryLength: Int { return MemoryLayout<Int32>.size }
+}
+
+extension Int64: ArtNetRawDecodable {
+    
+    public init?(binaryData data: Data) {
+        
+        guard data.count == MemoryLayout<Int64>.size
+            else { return nil }
+        
+        self.init(bytes: (data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]))
+    }
+    
+    public static var binaryLength: Int { return MemoryLayout<Int64>.size }
 }

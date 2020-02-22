@@ -24,7 +24,7 @@ public struct ArtNetEncoder {
     
     // MARK: - Methods
     
-    public func encode <T> (_ value: T) throws -> Data where T: Encodable, T: ArtNetPacket {
+    public func encode<T>(_ value: T) throws -> Data where T: Encodable, T: ArtNetPacket {
         
         log?("Will encode \(T.opCode) packet")
         

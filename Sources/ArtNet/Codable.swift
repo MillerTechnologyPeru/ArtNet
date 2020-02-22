@@ -13,7 +13,9 @@ public typealias ArtNetCodable = ArtNetEncodable & ArtNetDecodable
 /// Art-Net Decodable type
 public protocol ArtNetDecodable: Decodable {
     
-    init?(artNet: Data)
+    init?(artNet data: Data)
+    
+    static var length: Int { get }
 }
 
 /// Art-Net Encodable type

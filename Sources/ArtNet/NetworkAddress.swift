@@ -118,6 +118,8 @@ extension Address.IPv4: ArtNetCodable {
     public var artNet: Data {
         return address.s_addr.bigEndian.binaryData
     }
+    
+    public static var length: Int { return 4 }
 }
 
 public extension Address {
