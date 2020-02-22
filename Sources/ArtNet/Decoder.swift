@@ -136,7 +136,7 @@ internal extension ArtNetDecoder.Decoder {
         return self.data.subdataNoCopy(in: start ..< end)
     }
     
-    func read <T: ArtNetRawDecodable> (type: T.Type) throws -> T {
+    func read <T: ArtNetRawDecodable> (_ type: T.Type) throws -> T {
         
         let offset = self.offset
         let data = try read(T.binaryLength)
@@ -178,56 +178,57 @@ internal extension ArtNetDecoder.Decoder {
         return string
     }
     
-    func readNumeric <T: ArtNetRawDecodable & FixedWidthInteger> (_ data: Data, as type: T.Type) throws -> T {
+    func readNumeric <T: ArtNetRawDecodable & FixedWidthInteger> (_ type: T.Type) throws -> T {
         
-        var numericValue = try unbox(data, as: type)
-        switch options.numericFormatting {
-        case .bigEndian:
-            numericValue = T.init(bigEndian: numericValue)
-        case .littleEndian:
-            numericValue = T.init(littleEndian: numericValue)
-        }
-        return numericValue
+        let key = self.codingPath.last
+        let isLittleEndian = key.flatMap { formatting.littleEndian.contains(.init($0)) } ?? false
+        var value = try read(type)
+        value = isLittleEndian ? T.init(littleEndian: value) : T.init(bigEndian: value)
+        return value
     }
     
-    func unboxDouble(_ data: Data) throws -> Double {
-        let bitPattern = try unboxNumeric(data, as: UInt64.self)
+    func readDouble(_ data: Data) throws -> Double {
+        let bitPattern = try readNumeric(UInt64.self)
         return Double(bitPattern: bitPattern)
     }
     
-    func unboxFloat(_ data: Data) throws -> Float {
-        let bitPattern = try unboxNumeric(data, as: UInt32.self)
+    func readFloat(_ data: Data) throws -> Float {
+        let bitPattern = try readNumeric(UInt32.self)
         return Float(bitPattern: bitPattern)
     }
     
     /// Attempt to decode native value to expected type.
-    func unboxDecodable <T: Decodable> (_ item: TLVItem, as type: T.Type) throws -> T {
-        
+    func readDecodable <T: Decodable> (_ type: T.Type) throws -> T {
+                
         // override for native types
         if type == Data.self {
-            return item.value as! T // In this case T is Data
-        } else if type == UUID.self {
-            return try unboxUUID(item.value) as! T
-        } else if type == Date.self {
-            return try unboxDate(item.value) as! T
-        } else if let tlvCodable = type as? TLVCodable.Type {
-            guard let value = tlvCodable.init(binaryData: item.value) else {
-                throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: codingPath, debugDescription: "Invalid data for \(String(reflecting: type))"))
-            }
-            return value as! T
+            return readData() as! T // In this case T is Data
+        } else if let decodableType = type as? ArtNetCodable.Type {
+            return try readArtNetDecodable(decodableType) as! T
         } else {
-            // push container to stack and decode using Decodable implementation
-            stack.push(.item(item))
-            let decoded = try T(from: self)
-            stack.pop()
-            return decoded
+            // decode using Decodable, container should read directly.
+            return try T(from: self)
         }
     }
 }
 
 private extension ArtNetDecoder.Decoder {
     
+    func readArtNetDecodable(_ type: ArtNetDecodable.Type) throws -> ArtNetDecodable {
+        
+        let offset = self.offset
+        let data = try read(type.length)
+        guard let value = type.init(artNet: data) else {
+            throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not parse \(String(reflecting: type)) from \(data) at offset \(offset)"))
+        }
+        return value
+    }
     
+    func readData() throws -> Data {
+        
+        let offset = self.offset
+        
+    }
 }
 
 // MARK: - Decodable Types
@@ -244,7 +245,7 @@ extension Bool: ArtNetRawDecodable {
     
     public init?(binaryData data: Data) {
         
-        guard data.count == binaryLength
+        guard data.count == Bool.binaryLength
             else { return nil }
         
         self = data[0] != 0
