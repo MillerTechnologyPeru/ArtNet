@@ -336,10 +336,12 @@ internal extension ArtPollReply.ChannelArray {
 extension ArtPollReply.ChannelArray: Equatable {
     
     public static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.elements.0 == rhs.elements.0
-            && lhs.elements.1 == rhs.elements.1
-            && lhs.elements.2 == rhs.elements.2
-            && lhs.elements.3 == rhs.elements.3
+        let lhs = lhs.bytes
+        let rhs = rhs.bytes
+        return lhs.0 == rhs.0
+            && lhs.1 == rhs.1
+            && lhs.2 == rhs.2
+            && lhs.3 == rhs.3
     }
 }
 

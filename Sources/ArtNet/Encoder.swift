@@ -111,6 +111,7 @@ internal extension ArtNetEncoder {
 internal extension ArtNetEncoder.Encoder {
     
     func write(_ data: Data) {
+        //log?("Wrote \(data.count) bytes at \(max(self.data.count - 1, 0))")
         self.data.append(data)
     }
     

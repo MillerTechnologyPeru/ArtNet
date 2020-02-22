@@ -32,11 +32,11 @@ public struct ArtNetDecoder {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [], debugDescription: "Insufficient bytes (\(data.count))"))
         }
         
-        var decoder = Decoder(
+        let decoder = Decoder(
             userInfo: userInfo,
             log: log,
             formatting: ArtNetHeader.formatting,
-            data: data.subdataNoCopy(in: 0 ..< 10)
+            data: data
         )
         
         let header = try ArtNetHeader.init(from: decoder)
@@ -49,12 +49,8 @@ public struct ArtNetDecoder {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [], debugDescription: "Found opcode \(header.opCode) but expected \(T.opCode)"))
         }
         
-        decoder = Decoder(
-            userInfo: userInfo,
-            log: log,
-            formatting: T.formatting,
-            data: data.suffixNoCopy(from: 10)
-        )
+        decoder.offset = 10
+        decoder.formatting = T.formatting
         
         // decode from container
         return try T.init(from: decoder)
@@ -80,7 +76,7 @@ internal extension ArtNetDecoder {
         
         public fileprivate(set) var offset: Int = 0
         
-        public let formatting: ArtNetFormatting
+        public fileprivate(set) var formatting: ArtNetFormatting
         
         // MARK: - Initialization
         

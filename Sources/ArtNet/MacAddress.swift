@@ -135,7 +135,6 @@ extension MacAddress: CustomStringConvertible {
     public var description: String { return rawValue }
 }
 
-
 // MARK: Sequence
 
 extension MacAddress: Sequence {

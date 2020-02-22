@@ -73,7 +73,12 @@ final class ArtNetTests: XCTestCase {
             longName: "Long Name",
             nodeReport: "",
             ports: 1,
-            portTypes: [ArtPollReply.Channel(channelProtocol: .artNet, input: true, output: false)],
+            portTypes: [
+                ArtPollReply.Channel(channelProtocol: .artNet, input: true, output: false),
+                .init(),
+                .init(),
+                .init()
+            ],
             inputStatus: [[.disabled]],
             outputStatus: [[.dataTransmitted]],
             inputAddresses: [0x01],
@@ -84,7 +89,7 @@ final class ArtNetTests: XCTestCase {
             macAddress: MacAddress(rawValue: "00:1A:7D:DA:71:13")!,
             bindAddress: .zero,
             bindIndex: 0,
-            status2: []
+            status2: [.dhcpCapable]
         )
         
         XCTAssertEqual(value, value, "Equatable is not working")
@@ -104,6 +109,9 @@ final class ArtNetTests: XCTestCase {
             decoder.log = { print("Decoder:", $0) }
             let decodedValue = try decoder.decode(ArtPollReply.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
+            XCTAssertEqual(decodedValue.filler, Data(repeating: 0x00, count: 26), "Invalid filler (\(decodedValue.filler.count) bytes) \(decodedValue.filler.hexString)")
+            print("Decoded")
+            print(decodedValue)
         } catch {
             XCTFail(error.localizedDescription)
             dump(error)
