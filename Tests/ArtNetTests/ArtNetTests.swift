@@ -52,7 +52,7 @@ final class ArtNetTests: XCTestCase {
     }
     
     func testArtPollReply() {
-        /*
+        
         let value = ArtPollReply(
             address: Address.IPv4(rawValue: "192.168.0.100")!,
             firmwareVersion: 1,
@@ -66,11 +66,35 @@ final class ArtNetTests: XCTestCase {
             longName: "Long Name",
             nodeReport: "",
             ports: 1,
-            portTypes: [.init(channelProtocol: .artNet, input: true, output: false)]
+            portTypes: [ArtPollReply.Channel(channelProtocol: .artNet, input: true, output: false)],
+            inputStatus: [[.disabled]],
+            outputStatus: [[.dataTransmitted]],
+            inputAddresses: [0x01],
+            outputAddresses: [0x01],
+            video: false,
+            macro: [true, false, true],
+            remote: [false, true],
+            style: .node,
+            macAddress: MacAddress(rawValue: "00:1A:7D:DA:71:13")!,
+            bindAddress: .zero,
+            bindIndex: 0
         )
         
         XCTAssertEqual(value, value, "Equatable is not working")
-        */
+        
+        do {
+            var encoder = ArtNetEncoder()
+            encoder.log = { print("Encoder:", $0) }
+            let encodedData = try encoder.encode(value)
+            
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, data)
+        } catch {
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
     }
     
     func testArtPollReplyChannel() {

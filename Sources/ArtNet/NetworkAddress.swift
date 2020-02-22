@@ -80,6 +80,12 @@ public extension Address {
     }
 }
 
+public extension Address.IPv4 {
+    
+    /// Zero address
+    static var zero: Address.IPv4 { return .init(address: in_addr(s_addr: 0x00)) }
+}
+
 extension Address.IPv4: RawRepresentable {
     
     public init?(rawValue: String) {

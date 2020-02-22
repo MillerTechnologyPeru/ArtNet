@@ -29,7 +29,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
         string: [
             .shortName: .fixedLength(18),
             .longName:  .fixedLength(64),
-            .shortName: .fixedLength(64)
+            .nodeReport: .fixedLength(64)
         ]
     )
     
@@ -109,10 +109,10 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     public var portTypes: ChannelArray<Channel>
     
     /// This array defines input status of the node.
-    public var inputStatus: ChannelArray<InputStatus>
+    public var inputStatus: ChannelArray<BitMaskOptionSet<InputStatus>>
     
     /// This array defines output status of the node.
-    public var outputStatus: ChannelArray<OutputStatus>
+    public var outputStatus: ChannelArray<BitMaskOptionSet<OutputStatus>>
     
     /// Bits 3-0 of the 15 bit Port-Address for each of the 4 possible input ports are encoded into the low nibble.
     public var inputAddresses: ChannelArray<PortAddress>
@@ -586,5 +586,23 @@ public extension ArtPollReply {
         public init(rawValue: UInt8) {
             self.rawValue = rawValue
         }
+    }
+}
+
+// MARK: CustomStringConvertible
+
+extension ArtPollReply.PortAddress: CustomStringConvertible {
+    
+    public var description: String {
+        return rawValue.description
+    }
+}
+
+// MARK: ExpressibleByIntegerLiteral
+
+extension ArtPollReply.PortAddress: ExpressibleByIntegerLiteral {
+    
+    public init(integerLiteral value: UInt8) {
+        self.init(rawValue: value)
     }
 }
