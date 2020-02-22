@@ -59,7 +59,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     public var ubeaVersion: UInt8
     
     /// General Status register
-    public var status1: Status1
+    public var status1: BitMaskOptionSet<Status1>
     
     /// The ESTA manufacturer code.
     ///
@@ -152,6 +152,17 @@ public extension ArtPollReply {
     }
 }
 
+public extension ArtPollReply.ChannelArray {
+    
+    init<S>(_ sequence: S) where S: Sequence, S.Element == T {
+        let prefix = Array(sequence.prefix(4))
+        self.init((prefix.count > 0 ? prefix[0] : nil,
+                   prefix.count > 1 ? prefix[1] : nil,
+                   prefix.count > 2 ? prefix[2] : nil,
+                   prefix.count > 3 ? prefix[3] : nil))
+    }
+}
+
 internal extension ArtPollReply.ChannelArray {
     
     var bytes: (UInt8, UInt8, UInt8, UInt8) {
@@ -207,6 +218,15 @@ private extension ArtPollReply.ChannelArray {
     
     func description(for element: Element) -> String {
         return element.flatMap { "\($0)" } ?? "0x00"
+    }
+}
+
+// MARK: ExpressibleByArrayLiteral
+
+extension ArtPollReply.ChannelArray: ExpressibleByArrayLiteral {
+    
+    public init(arrayLiteral elements: T...) {
+        self.init(elements)
     }
 }
 
@@ -297,7 +317,7 @@ public extension ArtPollReply {
         
         public private(set) var rawValue: UInt8
         
-        public init(rawValue: UInt8) {
+        public init(rawValue: UInt8 = 0) {
             self.rawValue = rawValue
         }
     }
@@ -307,19 +327,29 @@ public extension ArtPollReply.Channel {
     
     var channelProtocol: ArtPollReply.ChannelProtocol {
         get { return ArtPollReply.ChannelProtocol(rawValue: rawValue & 0b00111111) ?? .dmx512 }
-        set { self.rawValue = (rawValue & 0b11000000) + newValue.rawValue }
-    }
-    
-    /// Whether this channel can output data from the Art-Net Network.
-    var output: Bool {
-        get { return contains(Feature.output) }
-        set { insert(Feature.output) }
+        set { rawValue = (rawValue & 0b11000000) + newValue.rawValue }
     }
     
     /// Whether this channel can input onto the Art-Net Network.
     var input: Bool {
         get { return contains(Feature.input) }
-        set { insert(Feature.input) }
+        set { newValue ? insert(Feature.input) : remove(Feature.input) }
+    }
+    
+    /// Whether this channel can output data from the Art-Net Network.
+    var output: Bool {
+        get { return contains(Feature.output) }
+        set { newValue ? insert(Feature.output) : remove(Feature.output) }
+    }
+    
+    init(channelProtocol: ArtPollReply.ChannelProtocol,
+         input: Bool = false,
+         output: Bool = false) {
+        
+        self.init()
+        self.channelProtocol = channelProtocol
+        self.input = input
+        self.output = output
     }
 }
 
@@ -331,10 +361,23 @@ internal extension ArtPollReply.Channel {
     }
 }
 
-internal extension ArtPollReply.Channel {
+private extension ArtPollReply.Channel {
     
     mutating func insert<T>(_ option: T) where T: RawRepresentable, T.RawValue == UInt8 {
         self.rawValue = self.rawValue | option.rawValue
+    }
+    
+    mutating func remove<T>(_ element: T) where T: RawRepresentable, T.RawValue == UInt8 {
+        self.rawValue = self.rawValue & ~element.rawValue
+    }
+}
+
+// MARK: CustomStringConvertible
+
+extension ArtPollReply.Channel: CustomStringConvertible {
+    
+    public var description: String {
+        return "\(ArtPollReply.self)(channelProtocol: \(channelProtocol), input: \(input), output: \(output))"
     }
 }
 
@@ -361,5 +404,21 @@ public extension ArtPollReply {
         
         /// Art-Net
         case artNet     = 0b000101
+    }
+}
+
+// MARK: CustomStringConvertible
+
+extension ArtPollReply.ChannelProtocol: CustomStringConvertible {
+    
+    public var description: String {
+        switch self {
+        case .dmx512:   return "DMX512"
+        case .midi:     return "MIDI"
+        case .avab:     return "avab"
+        case .cmx:      return "Colortran CMX"
+        case .adb:      return "ADB 62.5"
+        case .artNet:   return "Art-Net"
+        }
     }
 }

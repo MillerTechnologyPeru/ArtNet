@@ -75,9 +75,7 @@ public struct BitMaskOptionSet <Element: BitMaskOption>: RawRepresentable {
     public mutating func remove(_ element: Element) -> Bool {
         
         guard contains(element) else { return false }
-        
         rawValue = rawValue & ~element.rawValue
-        
         return true
     }
     
