@@ -22,7 +22,9 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
         littleEndian: [
             CodingKeys.port,
             .estaCode,
-            
+        ],
+        data: [
+            .filler: .remainder
         ]
     )
     
@@ -96,10 +98,66 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     /// Nodes can ignore this field as the information is implicit in PortTypes[].
     public var ports: UInt8
     
-    /// Defines the operation and protocol of each channel. (
+    /// This array defines the operation and protocol of each channel.
     ///
     /// A product with 4 inputs and 4 outputs would report `0xc0, 0xc0, 0xc0, 0xc0`.
     public var portTypes: ChannelArray<Channel>
+    
+    /// This array defines input status of the node.
+    public var inputStatus: ChannelArray<InputStatus>
+    
+    /// This array defines output status of the node.
+    public var outputStatus: ChannelArray<OutputStatus>
+    
+    /// Bits 3-0 of the 15 bit Port-Address for each of the 4 possible input ports are encoded into the low nibble.
+    public var inputAddresses: ChannelArray<PortAddress>
+    
+    /// Bits 3-0 of the 15 bit Port-Address for each of the 4 possible output ports are encoded into the low nibble.
+    public var outputAddresses: ChannelArray<PortAddress>
+    
+    /// Set to 00 when video display is showing local data. Set to 01 when video is showing ethernet data. The field is now deprecated.
+    @available(*, deprecated)
+    public internal(set) var video: Bool
+    
+    /// If the Node supports macro key inputs, this byte represents the trigger values.
+    /// The Node is responsible for ‘debouncing’ inputs. When the ArtPollReply is set to transmit automatically,
+    /// (TalkToMe Bit 1), the ArtPollReply will be sent on both key down and key up events.
+    /// However, the Controller should not assume that only one bit position has changed.
+    /// The Macro inputs are used for remote event triggering or cueing.
+    /// Bit fields are active high.
+    public var macro: UInt8
+    
+    /// If the Node supports remote trigger inputs, this byte represents the trigger values.
+    /// The Node is responsible for ‘debouncing’ inputs. When the ArtPollReply is set to transmit automatically, (TalkToMe Bit 1),
+    /// the ArtPollReply will be sent on both key down and key up events.
+    /// However, the Controller should not assume that only one bit position has changed.
+    /// The Remote inputs are used for remote event triggering or cueing.
+    /// Bit fields are active high.
+    public var remote: UInt8
+    
+    /// Not used, set to zero
+    internal var spare1: UInt8 = 0
+    
+    /// Not used, set to zero
+    internal var spare2: UInt8 = 0
+    
+    /// Not used, set to zero
+    internal var spare3: UInt8 = 0
+    
+    /// The Style code defines the equipment style of the device.
+    public var style: Style
+    
+    /// MAC Address
+    //public var macAddress:
+    
+    /// If this unit is part of a larger or modular product, this is the IP of the root device.
+    public var bindAddress: Address.IPv4
+    
+    /// This number represents the order of bound devices. A lower number means closer to root device. A value of 1 means root device.
+    public var bindIndex: UInt8
+    
+    /// Transmit as zero. For future expansion.
+    internal private(set) var filler: Data = Data(repeating: 0x00, count: 26)
 }
 
 // MARK: - Supporting Types
@@ -135,6 +193,34 @@ public extension ArtPollReply {
         case indicatorMute      = 0b10000000
         
         public static let indicatorNormal: BitMaskOptionSet<Status1> = [.indicatorIdentify, .indicatorMute]
+    }
+}
+
+// MARK: - Status2
+
+public extension ArtPollReply {
+    
+    enum Status2: UInt8, Codable, CaseIterable, BitMaskOption {
+        
+        /// Product supports web browser configuration.
+        case webConfiguration       = 0b00000001
+        
+        /// Node’s IP is DHCP configured.
+        case dhcpConfigured         = 0b00000010
+        
+        /// Node is DHCP capable.
+        case dhcpCapable            = 0b00000100
+        
+        /// Node supports 15 bit Port-Address (Art-Net 3 or 4).
+        ///
+        /// if not set, then node supports 8 bit Port-Address (Art- Net II).
+        case portAddress15bit       = 0b00001000
+        
+        /// Node is able to switch between Art-Net and sACN.
+        case sACN                   = 0b00010000
+        
+        /// Squawking
+        case squawking              = 0b00100000
     }
 }
 
@@ -415,10 +501,85 @@ extension ArtPollReply.ChannelProtocol: CustomStringConvertible {
         switch self {
         case .dmx512:   return "DMX512"
         case .midi:     return "MIDI"
-        case .avab:     return "avab"
+        case .avab:     return "Avab"
         case .cmx:      return "Colortran CMX"
         case .adb:      return "ADB 62.5"
         case .artNet:   return "Art-Net"
+        }
+    }
+}
+
+// MARK: - InputStatus
+
+public extension ArtPollReply {
+    
+    /// Defines input status of the node.
+    enum InputStatus: UInt8, Codable, CaseIterable, BitMaskOption {
+        
+        /// Receive errors detected.
+        case errorDetected      = 0b00000100
+        
+        /// Input is disabled.
+        case disabled           = 0b00001000
+        
+        /// Channel includes DMX512 text packets.
+        case text               = 0b00010000
+        
+        /// Channel includes DMX512 SIP’s.
+        case sip                = 0b00100000
+        
+        /// Channel includes DMX512 test packets.
+        case test               = 0b01000000
+        
+        /// Data received.
+        case dataRecieved       = 0b10000000
+    }
+}
+
+// MARK: - OutputStatus
+
+public extension ArtPollReply {
+    
+    enum OutputStatus: UInt8, Codable, CaseIterable, BitMaskOption {
+        
+        /// Output is selected to transmit sACN.
+        ///
+        /// If not set then Output is selected to transmit Art-Net.
+        case sACN               = 0b00000001
+        
+        /// Merge Mode is LTP.
+        case ltp                = 0b00000010
+        
+        /// DMX output short detected on power up
+        case shortDetected      = 0b00000100
+        
+        /// Output is merging ArtNet data.
+        case merging            = 0b00001000
+        
+        /// Channel includes DMX512 text packets.
+        case text               = 0b00010000
+        
+        /// Channel includes DMX512 SIP’s.
+        case sip                = 0b00100000
+        
+        /// Channel includes DMX512 test packets.
+        case test               = 0b01000000
+        
+        /// Data is being transmitted.
+        case dataTransmitted    = 0b10000000
+    }
+}
+
+// MARK: - PortAddress
+
+public extension ArtPollReply {
+    
+    struct PortAddress: RawRepresentable, Codable, Equatable, Hashable {
+        
+        public let rawValue: UInt8
+        
+        public init(rawValue: UInt8) {
+            self.rawValue = rawValue
         }
     }
 }
