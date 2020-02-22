@@ -72,7 +72,7 @@ internal extension ArtNetEncoder {
         
         // MARK: - Initialization
         
-        init(codingPath: [CodingKey] = [],
+        fileprivate init(codingPath: [CodingKey] = [],
              userInfo: [CodingUserInfoKey : Any],
              log: ((String) -> ())?,
              formatting: ArtNetFormatting,
