@@ -33,6 +33,8 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
         ]
     )
     
+    // MARK: - Properties
+    
     /// Node’s IP address.
     ///
     /// When binding is implemented, bound nodes may share the root node’s IP Address and the BindIndex is used to differentiate the nodes.
@@ -122,7 +124,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     
     /// Set to 00 when video display is showing local data. Set to 01 when video is showing ethernet data. The field is now deprecated.
     @available(*, deprecated)
-    public internal(set) var video: Bool
+    public internal(set) var video: Bool = false
     
     /// If the Node supports macro key inputs, this byte represents the trigger values.
     /// The Node is responsible for ‘debouncing’ inputs. When the ArtPollReply is set to transmit automatically,
@@ -141,13 +143,13 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     public var remote: BinaryArray
     
     /// Not used, set to zero
-    internal var spare1: UInt8 = 0
+    internal let spare1: UInt8 = 0
     
     /// Not used, set to zero
-    internal var spare2: UInt8 = 0
+    internal let spare2: UInt8 = 0
     
     /// Not used, set to zero
-    internal var spare3: UInt8 = 0
+    internal let spare3: UInt8 = 0
     
     /// The Style code defines the equipment style of the device.
     public var style: Style
@@ -161,8 +163,60 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     /// This number represents the order of bound devices. A lower number means closer to root device. A value of 1 means root device.
     public var bindIndex: UInt8
     
+    /// General Status register 2
+    public var status2: BitMaskOptionSet<Status2>
+    
     /// Transmit as zero. For future expansion.
-    internal private(set) var filler: Data = Data(repeating: 0x00, count: 26)
+    internal let filler: Data = Data(repeating: 0x00, count: 26)
+    
+    // MARK: - Initialization
+    
+    public init(firmwareVersion: UInt16 = 0,
+                netSwitch: UInt8 = 0,
+                subSwitch: UInt8 = 0,
+                oem: OEMCode,
+                ubeaVersion: UInt8 = 0,
+                status1: BitMaskOptionSet<Status1> = [],
+                estaCode: UInt16 = 0,
+                shortName: String,
+                longName: String,
+                nodeReport: String,
+                ports: UInt8 = 0,
+                portTypes: ChannelArray<Channel> = [],
+                inputStatus: ChannelArray<BitMaskOptionSet<InputStatus>> = [],
+                outputStatus: ChannelArray<BitMaskOptionSet<OutputStatus>> = [],
+                inputAddresses: ChannelArray<PortAddress> = [],
+                macro: BinaryArray = false,
+                remote: BinaryArray = false,
+                style: Style = .node,
+                macAddress: MacAddress,
+                bindAddress: Address.IPv4 = .zero,
+                bindIndex: UInt8 = 0,
+                status2: BitMaskOptionSet<Status2> = []) {
+        
+        self.firmwareVersion = firmwareVersion
+        self.netSwitch = netSwitch
+        self.subSwitch = subSwitch
+        self.oem = oem
+        self.ubeaVersion = ubeaVersion
+        self.status1 = status1
+        self.estaCode = estaCode
+        self.shortName = shortName
+        self.longName = longName
+        self.nodeReport = nodeReport
+        self.ports = ports
+        self.portTypes = portTypes
+        self.inputStatus = inputStatus
+        self.outputStatus = outputStatus
+        self.inputAddresses = inputAddresses
+        self.macro = macro
+        self.remote = remote
+        self.style = style
+        self.macAddress = macAddress
+        self.bindAddress = bindAddress
+        self.bindIndex = bindIndex
+        self.status2 = status2
+    }
 }
 
 // MARK: - Supporting Types
