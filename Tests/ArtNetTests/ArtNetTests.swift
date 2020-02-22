@@ -46,6 +46,12 @@ final class ArtNetTests: XCTestCase {
             
             XCTAssertFalse(encodedData.isEmpty)
             XCTAssertEqual(encodedData, data)
+            
+            var decoder = ArtNetDecoder()
+            decoder.log = { print("Decoder:", $0) }
+            let decodedValue = try decoder.decode(ArtPoll.self, from: data)
+            XCTAssertEqual(decodedValue, value)
+            
         } catch {
             XCTFail(error.localizedDescription)
             dump(error)
@@ -93,6 +99,11 @@ final class ArtNetTests: XCTestCase {
             
             XCTAssertFalse(encodedData.isEmpty)
             //XCTAssertEqual(encodedData, data)
+            
+            var decoder = ArtNetDecoder()
+            decoder.log = { print("Decoder:", $0) }
+            let decodedValue = try decoder.decode(ArtPollReply.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
         } catch {
             XCTFail(error.localizedDescription)
             dump(error)

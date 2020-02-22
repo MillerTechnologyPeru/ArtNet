@@ -30,7 +30,7 @@ public struct ArtPoll: ArtNetPacket, Equatable, Hashable, Codable {
     )
     
     /// Art-Net protocol revision.
-    public let protocolVersion: ProtocolVersion = .current
+    public let protocolVersion: ProtocolVersion
     
     /// Set behaviour of Node.
     public var behavior: BitMaskOptionSet<Behavior>
@@ -41,6 +41,7 @@ public struct ArtPoll: ArtNetPacket, Equatable, Hashable, Codable {
     public init(behavior: BitMaskOptionSet<Behavior> = [],
                 priority: DiagnosticPriority = .low) {
         
+        self.protocolVersion = .current
         self.behavior = behavior
         self.priority = priority
     }

@@ -41,7 +41,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     public var address: Address.IPv4
     
     /// The Port is always 0x1936
-    public let port: UInt16 = 0x1936
+    public let port: UInt16
     
     /// Node’s firmware revision number.
     ///
@@ -123,8 +123,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     public var outputAddresses: ChannelArray<PortAddress>
     
     /// Set to 00 when video display is showing local data. Set to 01 when video is showing ethernet data. The field is now deprecated.
-    @available(*, deprecated)
-    public internal(set) var video: Bool = false
+    public let video: Bool
     
     /// If the Node supports macro key inputs, this byte represents the trigger values.
     /// The Node is responsible for ‘debouncing’ inputs. When the ArtPollReply is set to transmit automatically,
@@ -167,7 +166,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     public var status2: BitMaskOptionSet<Status2>
     
     /// Transmit as zero. For future expansion.
-    internal let filler: Data = Data(repeating: 0x00, count: 26)
+    internal let filler: Data
     
     // MARK: - Initialization
     
@@ -220,6 +219,9 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
         self.bindAddress = bindAddress
         self.bindIndex = bindIndex
         self.status2 = status2
+        self.port = 0x1936
+        self.video = false
+        self.filler = Data(repeating: 0x00, count: 26)
     }
 }
 

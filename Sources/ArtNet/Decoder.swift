@@ -109,8 +109,7 @@ internal extension ArtNetDecoder {
         func unkeyedContainer() throws -> UnkeyedDecodingContainer {
             
             log?("Requested unkeyed container for path \"\(codingPath.path)\"")
-            
-            fatalError()
+            fatalError("Arrays not supported for ArtNet")
         }
         
         func singleValueContainer() throws -> SingleValueDecodingContainer {
@@ -128,12 +127,15 @@ internal extension ArtNetDecoder.Decoder {
     
     func read(_ bytes: Int) throws -> Data {
         let start = offset
-        let end = offset + bytes
+        let end = start + bytes
         guard self.data.count >= end else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: self.codingPath, debugDescription: "Insufficient bytes (\(data.count)), expected \(end) bytes"))
         }
         offset = end // new offset
-        return self.data.subdataNoCopy(in: start ..< end)
+        //defer { log?("Read \(bytes) bytes at \(start)") }
+        let data = self.data.subdataNoCopy(in: start ..< end)
+        assert(data.count == bytes)
+        return data
     }
     
     func read <T: ArtNetRawDecodable> (_ type: T.Type) throws -> T {
@@ -143,7 +145,7 @@ internal extension ArtNetDecoder.Decoder {
         guard let value = T.init(binaryData: data) else {
             throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not parse \(type) from \(data) at offset \(offset)"))
         }
-        
+                
         return value
     }
     
@@ -161,7 +163,7 @@ internal extension ArtNetDecoder.Decoder {
                 else {
                 throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: self.codingPath, debugDescription: "Missing null terminator for string starting at offset \(offset)"))
             }
-            length = end - offset
+            length = end - offset + 1
         case let .fixedLength(fixedLength):
             length = fixedLength
         }
@@ -488,7 +490,157 @@ internal struct ArtNetSingleValueDecodingContainer: SingleValueDecodingContainer
         return try decoder.readDecodable(type)
     }
 }
+/*
+// MARK: UnkeyedDecodingContainer
 
+internal struct ArtNetUnkeyedDecodingContainer: UnkeyedDecodingContainer {
+    
+    // MARK: Properties
+    
+    /// A reference to the encoder we're reading from.
+    let decoder: ArtNetDecoder.Decoder
+    
+    /// The path of coding keys taken to get to this point in decoding.
+    let codingPath: [CodingKey]
+    
+    private(set) var currentIndex: Int = 0
+    
+    // MARK: Initialization
+    
+    /// Initializes `self` by referencing the given decoder and container.
+    init(referencing decoder: ArtNetDecoder.Decoder) {
+        
+        self.decoder = decoder
+        self.codingPath = decoder.codingPath
+    }
+    
+    // MARK: UnkeyedDecodingContainer
+    
+    var count: Int? {
+        return _count
+    }
+    
+    private var _count: Int {
+        return container.count
+    }
+    
+    var isAtEnd: Bool {
+        return currentIndex >= _count
+    }
+    
+    mutating func decodeNil() throws -> Bool {
+        
+        try assertNotEnd()
+        
+        // never optional, decode
+        return false
+    }
+    
+    mutating func decode(_ type: Bool.Type) throws -> Bool { fatalError("stub") }
+    mutating func decode(_ type: Int.Type) throws -> Int { fatalError("stub") }
+    mutating func decode(_ type: Int8.Type) throws -> Int8 { fatalError("stub") }
+    mutating func decode(_ type: Int16.Type) throws -> Int16 { fatalError("stub") }
+    mutating func decode(_ type: Int32.Type) throws -> Int32 { fatalError("stub") }
+    mutating func decode(_ type: Int64.Type) throws -> Int64 { fatalError("stub") }
+    mutating func decode(_ type: UInt.Type) throws -> UInt { fatalError("stub") }
+    mutating func decode(_ type: UInt8.Type) throws -> UInt8 { fatalError("stub") }
+    mutating func decode(_ type: UInt16.Type) throws -> UInt16 { fatalError("stub") }
+    mutating func decode(_ type: UInt32.Type) throws -> UInt32 { fatalError("stub") }
+    mutating func decode(_ type: UInt64.Type) throws -> UInt64 { fatalError("stub") }
+    mutating func decode(_ type: Float.Type) throws -> Float { fatalError("stub") }
+    mutating func decode(_ type: Double.Type) throws -> Double { fatalError("stub") }
+    mutating func decode(_ type: String.Type) throws -> String { fatalError("stub") }
+    
+    mutating func decode <T : Decodable> (_ type: T.Type) throws -> T {
+        
+        try assertNotEnd()
+        
+        self.decoder.codingPath.append(Index(intValue: self.currentIndex))
+        defer { self.decoder.codingPath.removeLast() }
+        
+        let item = self.container[self.currentIndex]
+        
+        let decoded = try self.decoder.unboxDecodable(item, as: type)
+        
+        self.currentIndex += 1
+        
+        return decoded
+    }
+    
+    mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
+        
+        throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Cannot decode \(type)"))
+    }
+    
+    mutating func nestedUnkeyedContainer() throws -> UnkeyedDecodingContainer {
+        
+        throw DecodingError.typeMismatch([Any].self, DecodingError.Context(codingPath: codingPath, debugDescription: "Cannot decode unkeyed container."))
+    }
+    
+    mutating func superDecoder() throws -> Decoder {
+        
+        // set coding key context
+        self.decoder.codingPath.append(Index(intValue: currentIndex))
+        defer { self.decoder.codingPath.removeLast() }
+        
+        // log
+        self.decoder.log?("Requested super decoder for path \"\(self.decoder.codingPath.path)\"")
+        
+        // check for end of array
+        try assertNotEnd()
+        
+        // get item
+        let item = container[currentIndex]
+        
+        // increment counter
+        self.currentIndex += 1
+        
+        // create new decoder
+        let decoder = ArtNetDecoder.Decoder(referencing: .item(item),
+                                         at: self.decoder.codingPath,
+                                         userInfo: self.decoder.userInfo,
+                                         log: self.decoder.log,
+                                         options: self.decoder.options)
+        
+        return decoder
+    }
+    
+    // MARK: Private Methods
+    
+    @inline(__always)
+    private func assertNotEnd() throws {
+        
+        guard isAtEnd == false else {
+            
+            throw DecodingError.valueNotFound(Any?.self, DecodingError.Context(codingPath: self.decoder.codingPath + [Index(intValue: self.currentIndex)], debugDescription: "Unkeyed container is at end."))
+        }
+    }
+}
+
+internal extension ArtNetUnkeyedDecodingContainer {
+    
+    struct Index: CodingKey {
+        
+        public let index: Int
+        
+        public init(intValue: Int) {
+            self.index = intValue
+        }
+        
+        public init?(stringValue: String) {
+            return nil
+        }
+        
+        public var intValue: Int? {
+            return index
+        }
+        
+        public var stringValue: String {
+            return "\(index)"
+        }
+    }
+}
+*/
 // MARK: - Decodable Types
 
 /// Private protocol for decoding ArtNet values into raw data.
