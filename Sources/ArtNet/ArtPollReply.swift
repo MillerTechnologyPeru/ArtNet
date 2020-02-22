@@ -125,7 +125,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     /// However, the Controller should not assume that only one bit position has changed.
     /// The Macro inputs are used for remote event triggering or cueing.
     /// Bit fields are active high.
-    public var macro: UInt8
+    public var macro: BinaryArray
     
     /// If the Node supports remote trigger inputs, this byte represents the trigger values.
     /// The Node is responsible for ‘debouncing’ inputs. When the ArtPollReply is set to transmit automatically, (TalkToMe Bit 1),
@@ -133,7 +133,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     /// However, the Controller should not assume that only one bit position has changed.
     /// The Remote inputs are used for remote event triggering or cueing.
     /// Bit fields are active high.
-    public var remote: UInt8
+    public var remote: BinaryArray
     
     /// Not used, set to zero
     internal var spare1: UInt8 = 0
