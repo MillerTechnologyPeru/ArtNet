@@ -33,7 +33,6 @@ extension OEMCode: ExpressibleByIntegerLiteral {
 extension OEMCode: CustomStringConvertible {
     
     public var description: String {
-        
-        return rawValue.description //name ?? rawValue.description
+        return "0x" + rawValue.toHexadecimal()
     }
 }

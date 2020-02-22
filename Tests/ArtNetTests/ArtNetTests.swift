@@ -88,6 +88,7 @@ final class ArtNetTests: XCTestCase {
             let encodedData = try encoder.encode(value)
             
             print(encodedData.hexString)
+            print(value)
             
             XCTAssertFalse(encodedData.isEmpty)
             //XCTAssertEqual(encodedData, data)
@@ -135,17 +136,5 @@ extension Sequence where Element == UInt8 {
     
     var hexString: String {
         return "[" + reduce("", { $0 + ($0.isEmpty ? "" : ", ") + "0x" + $1.toHexadecimal().uppercased() }) + "]"
-    }
-}
-
-internal extension UInt8 {
-    
-    func toHexadecimal() -> String {
-        
-        var string = String(self, radix: 16)
-        if string.count == 1 {
-            string = "0" + string
-        }
-        return string
     }
 }

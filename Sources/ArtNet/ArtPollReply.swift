@@ -594,7 +594,7 @@ public extension ArtPollReply {
 extension ArtPollReply.PortAddress: CustomStringConvertible {
     
     public var description: String {
-        return rawValue.description
+        return "0x" + rawValue.toHexadecimal()
     }
 }
 
