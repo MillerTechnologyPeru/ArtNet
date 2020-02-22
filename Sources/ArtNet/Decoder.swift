@@ -102,8 +102,8 @@ internal extension ArtNetDecoder {
         func container <Key: CodingKey> (keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> {
             
             log?("Requested container keyed by \(type.sanitizedName) for path \"\(codingPath.path)\"")
-            
-            fatalError()
+            let container = ArtNetKeyedDecodingContainer<Key>(referencing: self)
+            return KeyedDecodingContainer(container)
         }
         
         func unkeyedContainer() throws -> UnkeyedDecodingContainer {
@@ -242,9 +242,164 @@ private extension ArtNetDecoder.Decoder {
     }
 }
 
+// MARK: - KeyedDecodingContainer
+
+internal struct ArtNetKeyedDecodingContainer <K: CodingKey> : KeyedDecodingContainerProtocol {
+    
+    typealias Key = K
+    
+    // MARK: Properties
+    
+    /// A reference to the encoder we're reading from.
+    let decoder: ArtNetDecoder.Decoder
+    
+    /// The path of coding keys taken to get to this point in decoding.
+    let codingPath: [CodingKey]
+    
+    /// All the keys the Decoder has for this container.
+    let allKeys: [Key]
+    
+    // MARK: Initialization
+    
+    /// Initializes `self` by referencing the given decoder and container.
+    init(referencing decoder: ArtNetDecoder.Decoder) {
+        
+        self.decoder = decoder
+        self.codingPath = decoder.codingPath
+        self.allKeys = [] // FIXME: allKeys
+    }
+    
+    // MARK: KeyedDecodingContainerProtocol
+    
+    func contains(_ key: Key) -> Bool {
+        
+        self.decoder.log?("Check whether key \"\(key.stringValue)\" exists")
+        return true // FIXME: Contains key
+    }
+    
+    func decodeNil(forKey key: Key) throws -> Bool {
+        
+        // set coding key context
+        self.decoder.codingPath.append(key)
+        defer { self.decoder.codingPath.removeLast() }
+        
+        self.decoder.log?("Check if nil at path \"\(decoder.codingPath.path)\"")
+        
+        // There is no way to represent nil in ArtNet
+        return false
+    }
+    
+    func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool {
+        return try decodeArtNet(type, forKey: key)
+    }
+    
+    func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
+        let value = try decodeNumeric(Int32.self, forKey: key)
+        return Int(value)
+    }
+    
+    func decode(_ type: Int8.Type, forKey key: Key) throws -> Int8 {
+        return try decodeArtNet(type, forKey: key)
+    }
+    
+    func decode(_ type: Int16.Type, forKey key: Key) throws -> Int16 {
+        return try decodeNumeric(type, forKey: key)
+    }
+    
+    func decode(_ type: Int32.Type, forKey key: Key) throws -> Int32 {
+        return try decodeNumeric(type, forKey: key)
+    }
+    
+    func decode(_ type: Int64.Type, forKey key: Key) throws -> Int64 {
+        return try decodeNumeric(type, forKey: key)
+    }
+    
+    func decode(_ type: UInt.Type, forKey key: Key) throws -> UInt {
+        let value = try decodeNumeric(UInt32.self, forKey: key)
+        return UInt(value)
+    }
+    
+    func decode(_ type: UInt8.Type, forKey key: Key) throws -> UInt8 {
+        return try decodeArtNet(type, forKey: key)
+    }
+    
+    func decode(_ type: UInt16.Type, forKey key: Key) throws -> UInt16 {
+        return try decodeNumeric(type, forKey: key)
+    }
+    
+    func decode(_ type: UInt32.Type, forKey key: Key) throws -> UInt32 {
+        return try decodeNumeric(type, forKey: key)
+    }
+    
+    func decode(_ type: UInt64.Type, forKey key: Key) throws -> UInt64 {
+        return try decodeNumeric(type, forKey: key)
+    }
+    
+    func decode(_ type: Float.Type, forKey key: Key) throws -> Float {
+        let bitPattern = try decodeNumeric(UInt32.self, forKey: key)
+        return Float(bitPattern: bitPattern)
+    }
+    
+    func decode(_ type: Double.Type, forKey key: Key) throws -> Double {
+        let bitPattern = try decodeNumeric(UInt64.self, forKey: key)
+        return Double(bitPattern: bitPattern)
+    }
+    
+    func decode(_ type: String.Type, forKey key: Key) throws -> String {
+        
+        self.decoder.codingPath.append(key)
+        defer { self.decoder.codingPath.removeLast() }
+        self.decoder.log?("Will read value at path \"\(decoder.codingPath.path)\"")
+        return try self.decoder.readString()
+    }
+    
+    func decode <T: Decodable> (_ type: T.Type, forKey key: Key) throws -> T {
+        
+        self.decoder.codingPath.append(key)
+        defer { self.decoder.codingPath.removeLast() }
+        self.decoder.log?("Will read value at path \"\(decoder.codingPath.path)\"")
+        return try self.decoder.readDecodable(T.self)
+    }
+    
+    func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
+        fatalError()
+    }
+    
+    func nestedUnkeyedContainer(forKey key: Key) throws -> UnkeyedDecodingContainer {
+        fatalError()
+    }
+    
+    func superDecoder() throws -> Decoder {
+        fatalError()
+    }
+    
+    func superDecoder(forKey key: Key) throws -> Decoder {
+        fatalError()
+    }
+    
+    // MARK: Private Methods
+    
+    /// Decode native value type from ArtNet data.
+    private func decodeArtNet <T: ArtNetRawDecodable> (_ type: T.Type, forKey key: Key) throws -> T {
+        
+        self.decoder.codingPath.append(key)
+        defer { self.decoder.codingPath.removeLast() }
+        self.decoder.log?("Will read value at path \"\(decoder.codingPath.path)\"")
+        return try self.decoder.read(T.self)
+    }
+    
+    private func decodeNumeric <T: ArtNetRawDecodable & FixedWidthInteger> (_ type: T.Type, forKey key: Key) throws -> T {
+        
+        self.decoder.codingPath.append(key)
+        defer { self.decoder.codingPath.removeLast() }
+        self.decoder.log?("Will read value at path \"\(decoder.codingPath.path)\"")
+        return try self.decoder.readNumeric(T.self)
+    }
+}
+
 // MARK: - Decodable Types
 
-/// Private protocol for decoding TLV values into raw data.
+/// Private protocol for decoding ArtNet values into raw data.
 internal protocol ArtNetRawDecodable {
     
     init?(binaryData data: Data)
