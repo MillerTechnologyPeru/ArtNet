@@ -153,7 +153,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     public var style: Style
     
     /// MAC Address
-    //public var macAddress:
+    public var macAddress: MacAddress
     
     /// If this unit is part of a larger or modular product, this is the IP of the root device.
     public var bindAddress: Address.IPv4
