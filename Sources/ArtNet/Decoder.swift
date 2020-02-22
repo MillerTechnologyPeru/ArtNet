@@ -116,8 +116,8 @@ internal extension ArtNetDecoder {
         func singleValueContainer() throws -> SingleValueDecodingContainer {
             
             log?("Requested single value container for path \"\(codingPath.path)\"")
-            
-            fatalError()
+            let container = ArtNetSingleValueDecodingContainer(referencing: self)
+            return container
         }
     }
 }
@@ -394,6 +394,98 @@ internal struct ArtNetKeyedDecodingContainer <K: CodingKey> : KeyedDecodingConta
         defer { self.decoder.codingPath.removeLast() }
         self.decoder.log?("Will read value at path \"\(decoder.codingPath.path)\"")
         return try self.decoder.readNumeric(T.self)
+    }
+}
+
+// MARK: - SingleValueDecodingContainer
+
+internal struct ArtNetSingleValueDecodingContainer: SingleValueDecodingContainer {
+    
+    // MARK: Properties
+    
+    /// A reference to the decoder we're reading from.
+    let decoder: ArtNetDecoder.Decoder
+    
+    /// The path of coding keys taken to get to this point in decoding.
+    let codingPath: [CodingKey]
+    
+    // MARK: Initialization
+    
+    /// Initializes `self` by referencing the given decoder and container.
+    init(referencing decoder: ArtNetDecoder.Decoder) {
+        
+        self.decoder = decoder
+        self.codingPath = decoder.codingPath
+    }
+    
+    // MARK: SingleValueDecodingContainer
+    
+    func decodeNil() -> Bool {
+        return false // FIXME: Decode nil
+    }
+    
+    func decode(_ type: Bool.Type) throws -> Bool {
+        return try decoder.read(Bool.self)
+    }
+    
+    func decode(_ type: Int.Type) throws -> Int {
+        let value = try decoder.readNumeric(Int32.self)
+        return Int(value)
+    }
+    
+    func decode(_ type: Int8.Type) throws -> Int8 {
+        return try decoder.read(Int8.self)
+    }
+    
+    func decode(_ type: Int16.Type) throws -> Int16 {
+        return try decoder.readNumeric(Int16.self)
+    }
+    
+    func decode(_ type: Int32.Type) throws -> Int32 {
+        return try decoder.readNumeric(Int32.self)
+    }
+    
+    func decode(_ type: Int64.Type) throws -> Int64 {
+        return try decoder.readNumeric(Int64.self)
+    }
+    
+    func decode(_ type: UInt.Type) throws -> UInt {
+        let value = try decoder.readNumeric(UInt32.self)
+        return UInt(value)
+    }
+    
+    func decode(_ type: UInt8.Type) throws -> UInt8 {
+        return try decoder.read(UInt8.self)
+    }
+    
+    func decode(_ type: UInt16.Type) throws -> UInt16 {
+        return try decoder.readNumeric(UInt16.self)
+    }
+    
+    func decode(_ type: UInt32.Type) throws -> UInt32 {
+        return try decoder.readNumeric(UInt32.self)
+    }
+    
+    func decode(_ type: UInt64.Type) throws -> UInt64 {
+        return try decoder.readNumeric(UInt64.self)
+    }
+    
+    func decode(_ type: Float.Type) throws -> Float {
+        let value = try decoder.readNumeric(UInt32.self)
+        return Float(bitPattern: value)
+    }
+    
+    func decode(_ type: Double.Type) throws -> Double {
+        let value = try decoder.readNumeric(UInt64.self)
+        return Double(bitPattern: value)
+    }
+    
+    func decode(_ type: String.Type) throws -> String {
+        return try decoder.readString()
+    }
+    
+    func decode <T : Decodable> (_ type: T.Type) throws -> T {
+        return try decoder.readDecodable(type)
     }
 }
 
