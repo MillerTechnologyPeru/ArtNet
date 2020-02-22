@@ -202,7 +202,7 @@ internal extension ArtNetDecoder.Decoder {
                 
         // override for native types
         if type == Data.self {
-            return readData() as! T // In this case T is Data
+            return try readData() as! T // In this case T is Data
         } else if let decodableType = type as? ArtNetCodable.Type {
             return try readArtNetDecodable(decodableType) as! T
         } else {
@@ -227,7 +227,18 @@ private extension ArtNetDecoder.Decoder {
     func readData() throws -> Data {
         
         let offset = self.offset
+        let key = self.codingPath.last
+        let dataFormatting = key.flatMap { formatting.data[.init($0)] } ?? .lengthSpecifier
         
+        let length: Int
+        switch dataFormatting {
+        case .lengthSpecifier:
+            length = try Int(UInt16(bigEndian: read(UInt16.self)))
+        case .remainder:
+             length = max(data.count - offset, 0)
+        }
+        let data = try read(length)
+        return data
     }
 }
 
