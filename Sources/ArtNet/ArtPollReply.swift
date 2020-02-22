@@ -327,7 +327,14 @@ extension ArtPollReply.ChannelArray: Codable {
     
     public init(from decoder: Decoder) throws {
         
-        fatalError()
+        let array = try [T?].init(from: decoder)
+        guard array.count <= 4 else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Array cannot have more than 4 items"))
+        }
+        self.init((array.count > 0 ? array[0] : nil,
+                   array.count > 1 ? array[1] : nil,
+                   array.count > 2 ? array[2] : nil,
+                   array.count > 3 ? array[3] : nil))
     }
     
     public func encode(to encoder: Encoder) throws {
