@@ -42,6 +42,7 @@ final class ArtNetTests: XCTestCase {
             let encodedData = try encoder.encode(value)
             
             print(encodedData.hexString)
+            print(value)
             
             XCTAssertFalse(encodedData.isEmpty)
             XCTAssertEqual(encodedData, data)
