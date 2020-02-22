@@ -75,7 +75,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     /// These codes are used to represent equipment manufacturer.
     /// They are assigned by ESTA.
     /// This field can be interpreted as two ASCII bytes representing the manufacturer initials.
-    public var estaCode: UInt16
+    public var estaCode: ESTACode
     
     /// The array represents a null terminated short name for the Node.
     ///
@@ -177,7 +177,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
                 oem: OEMCode,
                 ubeaVersion: UInt8 = 0,
                 status1: BitMaskOptionSet<Status1> = [],
-                estaCode: UInt16 = 0,
+                estaCode: ESTACode = 0x00,
                 shortName: String,
                 longName: String,
                 nodeReport: String,
