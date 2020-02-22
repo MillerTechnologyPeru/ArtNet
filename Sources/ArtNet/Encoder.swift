@@ -120,27 +120,28 @@ internal extension ArtNetEncoder.Encoder {
     }
     
     @inline(__always)
-    func boxNumeric <T: ArtNetRawEncodable & FixedWidthInteger, K: CodingKey> (_ value: T, for key: K) -> Data {
+    func boxNumeric <T: ArtNetRawEncodable & FixedWidthInteger> (_ value: T) -> Data {
         
-        let isLittleEndian = formatting.littleEndian.contains(.init(key))
+        let key = self.codingPath.last
+        let isLittleEndian = key.flatMap { formatting.littleEndian.contains(.init($0)) } ?? false
         let numericValue = isLittleEndian ? value.littleEndian : value.bigEndian
         return box(numericValue)
     }
     
     @inline(__always)
-    func boxDouble <K: CodingKey> (_ double: Double, for key: K) -> Data {
-        return boxNumeric(double.bitPattern, for: key)
+    func boxDouble(_ double: Double) -> Data {
+        return boxNumeric(double.bitPattern)
     }
     
     @inline(__always)
-    func boxFloat <K: CodingKey> (_ float: Float, for key: K) -> Data {
-        return boxNumeric(float.bitPattern, for: key)
+    func boxFloat(_ float: Float) -> Data {
+        return boxNumeric(float.bitPattern)
     }
     
-    func writeEncodable <T: Encodable, K: CodingKey> (_ value: T, for key: K) throws {
+    func writeEncodable <T: Encodable> (_ value: T) throws {
         
         if let data = value as? Data {
-            write(boxData(data, for: key))
+            write(boxData(data))
         } else if let encodable = value as? ArtNetEncodable {
             write(encodable.artNet)
         } else {
@@ -152,22 +153,23 @@ internal extension ArtNetEncoder.Encoder {
 
 private extension ArtNetEncoder.Encoder {
     
-    func boxData <K: CodingKey> (_ data: Data, for key: K) -> Data {
+    func boxData(_ data: Data) -> Data {
         
-        let dataFormatting = formatting.data[.init(key)] ?? .lengthSpecifier
+        let key = self.codingPath.last
+        let dataFormatting = key.flatMap { formatting.data[.init($0)] } ?? .lengthSpecifier
         
         switch dataFormatting {
         case .lengthSpecifier:
-            var data = Data(capacity: 2 + data.count)
+            var encodedData = Data(capacity: 2 + data.count)
             let length = UInt16(data.count)
-            data.append(length.binaryData)
-            data.append(data)
+            encodedData.append(length.binaryData)
+            encodedData.append(data)
+            return encodedData
         case .remainder:
             return data
         }
     }
 }
-
 
 // MARK: - KeyedEncodingContainerProtocol
 
@@ -258,26 +260,22 @@ internal struct ArtNetKeyedContainer <K : CodingKey> : KeyedEncodingContainerPro
         self.encoder.codingPath.append(key)
         defer { self.encoder.codingPath.removeLast() }
         encoder.log?("Will encode value for key \(key.stringValue) at path \"\(encoder.codingPath.path)\"")
-        try encoder.writeEncodable(value, for: key)
+        try encoder.writeEncodable(value)
     }
     
     func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
-        
         fatalError()
     }
     
     func nestedUnkeyedContainer(forKey key: K) -> UnkeyedEncodingContainer {
-        
         fatalError()
     }
     
     func superEncoder() -> Encoder {
-        
         fatalError()
     }
     
     func superEncoder(forKey key: K) -> Encoder {
-        
         fatalError()
     }
     
@@ -287,7 +285,7 @@ internal struct ArtNetKeyedContainer <K : CodingKey> : KeyedEncodingContainerPro
         
         self.encoder.codingPath.append(key)
         defer { self.encoder.codingPath.removeLast() }
-        let data = encoder.boxNumeric(value, for: key)
+        let data = encoder.boxNumeric(value)
         try setValue(value, data: data, for: key)
     }
     
@@ -302,6 +300,160 @@ internal struct ArtNetKeyedContainer <K : CodingKey> : KeyedEncodingContainerPro
     private func setValue <T> (_ value: T, data: Data, for key: Key) throws {
         encoder.log?("Will encode value for key \(key.stringValue) at path \"\(encoder.codingPath.path)\"")
         self.encoder.write(data)
+    }
+}
+
+// MARK: - SingleValueEncodingContainer
+
+internal final class ArtNetSingleValueEncodingContainer: SingleValueEncodingContainer {
+    
+    // MARK: - Properties
+    
+    /// A reference to the encoder we're writing to.
+    let encoder: ArtNetEncoder.Encoder
+    
+    /// The path of coding keys taken to get to this point in encoding.
+    let codingPath: [CodingKey]
+    
+    /// Whether the data has been written
+    private var didWrite = false
+    
+    // MARK: - Initialization
+    
+    init(referencing encoder: ArtNetEncoder.Encoder) {
+        
+        self.encoder = encoder
+        self.codingPath = encoder.codingPath
+    }
+    
+    // MARK: - Methods
+    
+    func encodeNil() throws {
+        // do nothing
+    }
+    
+    func encode(_ value: Bool) throws { write(encoder.box(value)) }
+    
+    func encode(_ value: String) throws { write(encoder.box(value)) }
+    
+    func encode(_ value: Double) throws { write(encoder.boxDouble(value)) }
+    
+    func encode(_ value: Float) throws { write(encoder.boxFloat(value)) }
+    
+    func encode(_ value: Int) throws { write(encoder.boxNumeric(Int32(value))) }
+    
+    func encode(_ value: Int8) throws { write(encoder.box(value)) }
+    
+    func encode(_ value: Int16) throws { write(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: Int32) throws { write(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: Int64) throws { write(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: UInt) throws { write(encoder.boxNumeric(UInt32(value))) }
+    
+    func encode(_ value: UInt8) throws { write(encoder.box(value)) }
+    
+    func encode(_ value: UInt16) throws { write(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: UInt32) throws { write(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: UInt64) throws { write(encoder.boxNumeric(value)) }
+    
+    func encode <T: Encodable> (_ value: T) throws {
+        precondition(didWrite == false, "Data already written")
+        try encoder.writeEncodable(value)
+        self.didWrite = true
+    }
+    
+    // MARK: - Private Methods
+    
+    private func write(_ data: Data) {
+        
+        precondition(didWrite == false, "Data already written")
+        self.encoder.write(data)
+        self.didWrite = true
+    }
+}
+
+// MARK: - UnkeyedEncodingContainer
+
+internal final class ArtNetUnkeyedEncodingContainer: UnkeyedEncodingContainer {
+    
+    // MARK: - Properties
+    
+    /// A reference to the encoder we're writing to.
+    let encoder: ArtNetEncoder.Encoder
+    
+    /// The path of coding keys taken to get to this point in encoding.
+    let codingPath: [CodingKey]
+    
+    // MARK: - Initialization
+    
+    init(referencing encoder: ArtNetEncoder.Encoder) {
+        self.encoder = encoder
+        self.codingPath = encoder.codingPath
+    }
+    
+    // MARK: - Methods
+    
+    /// The number of elements encoded into the container.
+    private(set) var count: Int = 0
+    
+    func encodeNil() throws {
+        // do nothing
+    }
+    
+    func encode(_ value: Bool) throws { append(encoder.box(value)) }
+    
+    func encode(_ value: String) throws { append(encoder.box(value)) }
+    
+    func encode(_ value: Double) throws { append(encoder.boxNumeric(value.bitPattern)) }
+    
+    func encode(_ value: Float) throws { append(encoder.boxNumeric(value.bitPattern)) }
+    
+    func encode(_ value: Int) throws { append(encoder.boxNumeric(Int32(value))) }
+    
+    func encode(_ value: Int8) throws { append(encoder.box(value)) }
+    
+    func encode(_ value: Int16) throws { append(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: Int32) throws { append(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: Int64) throws { append(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: UInt) throws { append(encoder.boxNumeric(UInt32(value))) }
+    
+    func encode(_ value: UInt8) throws { append(encoder.box(value)) }
+    
+    func encode(_ value: UInt16) throws { append(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: UInt32) throws { append(encoder.boxNumeric(value)) }
+    
+    func encode(_ value: UInt64) throws { append(encoder.boxNumeric(value)) }
+    
+    func encode <T: Encodable> (_ value: T) throws {
+        try encoder.writeEncodable(value)
+        count += 1
+    }
+    
+    func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
+        fatalError()
+    }
+    
+    func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
+        fatalError()
+    }
+    
+    func superEncoder() -> Encoder {
+        fatalError()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func append(_ data: Data) {
+        self.encoder.write(data)
+        count += 1
     }
 }
 

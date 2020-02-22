@@ -49,7 +49,7 @@ public extension ArtNetFormatting {
 
 public extension ArtNetFormatting.Key {
     
-    init <T: CodingKey> (_ key: T) {
+    init(_ key: CodingKey) {
         self.rawValue = key.stringValue
     }
 }
