@@ -49,6 +49,8 @@ final class ArtNetTests: XCTestCase {
     }
 }
 
+// MARK: - Extensions
+
 extension Sequence where Element == UInt8 {
     
     var hexString: String {

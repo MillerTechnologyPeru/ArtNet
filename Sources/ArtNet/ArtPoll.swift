@@ -21,7 +21,7 @@ import Foundation
  If there are multiple controllers requesting diagnostics, diagnostics shall be broadcast. (Ignore ArtPoll->TalkToMe->3).
  The lowest minimum value of Priority shall be used. (Ignore ArtPoll->Priority).
  */
-public struct Poll: ArtNetPacket, Equatable, Hashable, Codable {
+public struct ArtPoll: ArtNetPacket, Equatable, Hashable, Codable {
     
     /// ArtNet packet code.
     public static var opCode: OpCode { return .poll }
@@ -50,9 +50,7 @@ public struct Poll: ArtNetPacket, Equatable, Hashable, Codable {
     }
 }
 
-public typealias ArtPoll = Poll // name in specs
-
-public extension Poll {
+public extension ArtPoll {
     
     /// Set behaviour of Node
     enum Behavior: UInt8, Codable, CaseIterable, BitMaskOption {

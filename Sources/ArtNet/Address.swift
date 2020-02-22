@@ -102,6 +102,12 @@ extension Address.IPv4: Hashable {
     }
 }
 
+extension Address.IPv4: ArtNetEncodable {
+    public var artNet: Data {
+        return address.s_addr.bigEndian.binaryData
+    }
+}
+
 public extension Address {
     
     struct IPv6: AddressProtocol, Equatable, Codable, CustomStringConvertible {
