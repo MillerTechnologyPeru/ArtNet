@@ -416,6 +416,7 @@ public extension ArtPollReply {
 
 public extension ArtPollReply.Channel {
     
+    /// Channel Protocol type
     var channelProtocol: ArtPollReply.ChannelProtocol {
         get { return ArtPollReply.ChannelProtocol(rawValue: rawValue & 0b00111111) ?? .dmx512 }
         set { rawValue = (rawValue & 0b11000000) + newValue.rawValue }
@@ -424,13 +425,13 @@ public extension ArtPollReply.Channel {
     /// Whether this channel can input onto the Art-Net Network.
     var input: Bool {
         get { return contains(Feature.input) }
-        set { newValue ? insert(Feature.input) : remove(Feature.input) }
+        set { newValue ? rawValue.insert(Feature.input) : rawValue.remove(Feature.input) }
     }
     
     /// Whether this channel can output data from the Art-Net Network.
     var output: Bool {
         get { return contains(Feature.output) }
-        set { newValue ? insert(Feature.output) : remove(Feature.output) }
+        set { newValue ? rawValue.insert(Feature.output) : rawValue.remove(Feature.output) }
     }
     
     init(channelProtocol: ArtPollReply.ChannelProtocol,
@@ -452,17 +453,6 @@ internal extension ArtPollReply.Channel {
     }
 }
 
-private extension ArtPollReply.Channel {
-    
-    mutating func insert<T>(_ option: T) where T: RawRepresentable, T.RawValue == UInt8 {
-        self.rawValue = self.rawValue | option.rawValue
-    }
-    
-    mutating func remove<T>(_ element: T) where T: RawRepresentable, T.RawValue == UInt8 {
-        self.rawValue = self.rawValue & ~element.rawValue
-    }
-}
-
 // MARK: CustomStringConvertible
 
 extension ArtPollReply.Channel: CustomStringConvertible {
@@ -476,6 +466,7 @@ extension ArtPollReply.Channel: CustomStringConvertible {
 
 public extension ArtPollReply {
     
+    /// Defines the protocol for a channel.
     enum ChannelProtocol: UInt8 {
         
         /// DMX512

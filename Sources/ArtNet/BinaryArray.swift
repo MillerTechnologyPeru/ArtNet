@@ -5,6 +5,7 @@
 //  Created by Alsey Coleman Miller on 2/22/20.
 //
 
+/// A static bit mask array to store 8 boolean values in a byte.
 public struct BinaryArray: RawRepresentable, Equatable, Hashable, Codable {
     
     public var rawValue: UInt8
