@@ -14,21 +14,28 @@ public struct ArtNetFormatting {
     /// Encode the data properties with the specified formatting.
     public var data: [Key: DataFormatting]
     
+    /// Encode string properties with the specified formatting.
+    public var string: [Key: StringFormatting]
+    
     public init(littleEndian: [Key] = [],
-                data: [Key: DataFormatting] = [:]) {
+                data: [Key: DataFormatting] = [:],
+                string: [Key: StringFormatting] = [:]) {
         
         self.littleEndian = littleEndian
         self.data = data
+        self.string = string
     }
 }
 
 public extension ArtNetFormatting {
     
     init <T> (littleEndian: [T] = [],
-              data: [T: DataFormatting] = [:]) where T: CodingKey, T: Hashable {
+              data: [T: DataFormatting] = [:],
+              string: [T: StringFormatting] = [:]) where T: CodingKey, T: Hashable {
         
         self.littleEndian = littleEndian.map { .init($0) }
         self.data = data.mapKeys { .init($0) }
+        self.string = string.mapKeys { .init($0) }
     }
 }
 
@@ -64,5 +71,17 @@ public extension ArtNetFormatting {
         
         /// The remaining bytes are treated as data.
         case remainder
+    }
+}
+
+public extension ArtNetFormatting {
+    
+    enum StringFormatting {
+        
+        /// Null terminated variable length string
+        case variableLength
+        
+        /// Null terminated fixed length string
+        case fixedLength(Int)
     }
 }

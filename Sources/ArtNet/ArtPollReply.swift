@@ -25,6 +25,11 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
         ],
         data: [
             .filler: .remainder
+        ],
+        string: [
+            .shortName: .fixedLength(18),
+            .longName:  .fixedLength(64),
+            .shortName: .fixedLength(64)
         ]
     )
     

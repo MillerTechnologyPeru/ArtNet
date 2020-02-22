@@ -119,6 +119,24 @@ internal extension ArtNetEncoder.Encoder {
         return value.binaryData
     }
     
+    func boxString(_ value: String) -> Data {
+        
+        let key = self.codingPath.last
+        let encoding = key.flatMap { formatting.string[.init($0)] } ?? .variableLength
+        switch encoding {
+        case .variableLength:
+            return Data(unsafeBitCast(value.utf8CString, to: ContiguousArray<UInt8>.self))
+        case let .fixedLength(length):
+            let stringLength = max(length - 1, 0)
+            var data = Data(repeating: 0x00, count: length)
+            value.utf8
+                .prefix(stringLength)
+                .enumerated()
+                .forEach { data[$0.offset] = $0.element }
+            return data
+        }
+    }
+    
     @inline(__always)
     func boxNumeric <T: ArtNetRawEncodable & FixedWidthInteger> (_ value: T) -> Data {
         
@@ -252,7 +270,10 @@ internal struct ArtNetKeyedContainer <K : CodingKey> : KeyedEncodingContainerPro
     }
     
     func encode(_ value: String, forKey key: K) throws {
-        try encodeArtNet(value, forKey: key)
+        self.encoder.codingPath.append(key)
+        defer { self.encoder.codingPath.removeLast() }
+        let data = encoder.boxString(value)
+        try setValue(value, data: data, for: key)
     }
     
     func encode <T: Encodable> (_ value: T, forKey key: K) throws {
@@ -334,7 +355,7 @@ internal final class ArtNetSingleValueEncodingContainer: SingleValueEncodingCont
     
     func encode(_ value: Bool) throws { write(encoder.box(value)) }
     
-    func encode(_ value: String) throws { write(encoder.box(value)) }
+    func encode(_ value: String) throws { write(encoder.boxString(value)) }
     
     func encode(_ value: Double) throws { write(encoder.boxDouble(value)) }
     
@@ -406,7 +427,7 @@ internal final class ArtNetUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     
     func encode(_ value: Bool) throws { append(encoder.box(value)) }
     
-    func encode(_ value: String) throws { append(encoder.box(value)) }
+    func encode(_ value: String) throws { append(encoder.boxString(value)) }
     
     func encode(_ value: Double) throws { append(encoder.boxNumeric(value.bitPattern)) }
     
@@ -546,12 +567,5 @@ extension Bool: ArtNetRawEncodable {
     
     public var binaryData: Data {
         return UInt8(self ? 1 : 0).copyingBytes
-    }
-}
-
-extension String: ArtNetRawEncodable {
-    
-    public var binaryData: Data {
-        return Data(unsafeBitCast(self.utf8CString, to: ContiguousArray<UInt8>.self))
     }
 }
