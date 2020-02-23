@@ -21,6 +21,9 @@ public typealias ArtDiagData = DiagnosticData
 /// Diagnostics Priority codes
 public enum DiagnosticPriority: UInt8, Codable, CaseIterable {
     
+    /// Send all diagnostics. 
+    case all        = 0x00
+    
     /// Low priority message.
     case low        = 0x10
     

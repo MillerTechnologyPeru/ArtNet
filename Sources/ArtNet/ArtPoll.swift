@@ -24,11 +24,6 @@ public struct ArtPoll: ArtNetPacket, Equatable, Hashable, Codable {
     /// ArtNet packet code.
     public static var opCode: OpCode { return .poll }
     
-    /// Art-Net formatting
-    public static let formatting = ArtNetFormatting(
-        littleEndian: [CodingKeys.protocolVersion]
-    )
-    
     /// Art-Net protocol revision.
     public let protocolVersion: ProtocolVersion
     
