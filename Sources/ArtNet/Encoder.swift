@@ -181,7 +181,7 @@ private extension ArtNetEncoder.Encoder {
         case .lengthSpecifier:
             var encodedData = Data(capacity: 2 + data.count)
             let length = UInt16(data.count)
-            encodedData.append(length.binaryData)
+            encodedData.append(length.bigEndian.binaryData)
             encodedData.append(data)
             return encodedData
         case .remainder:

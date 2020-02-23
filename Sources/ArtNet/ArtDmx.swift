@@ -34,6 +34,9 @@ public struct ArtDmx: ArtNetPacket, Equatable, Hashable, Codable {
         data: [.lightingData: .lengthSpecifier]
     )
     
+    /// Art-Net protocol revision.
+    public let protocolVersion: ProtocolVersion
+    
     /**
      The sequence number is used to ensure that
      ArtDmx packets are used in the correct order. When Art-Net is carried over a medium such as the Internet, it is possible that ArtDmx packets will reach the receiver out of order.
@@ -54,4 +57,16 @@ public struct ArtDmx: ArtNetPacket, Equatable, Hashable, Codable {
     
     /// A variable length array of DMX512 lighting data.
     public var lightingData: Data
+    
+    public init(sequence: UInt8 = 0,
+                physical: UInt8 = 0,
+                universe: UInt16 = 0,
+                lightingData: Data = Data()) {
+        
+        self.protocolVersion = .current
+        self.sequence = sequence
+        self.physical = physical
+        self.universe = universe
+        self.lightingData = lightingData
+    }
 }
