@@ -112,11 +112,11 @@ extension Address.IPv4: ArtNetCodable {
     
     public init?(artNet data: Data) {
         guard data.count == 4 else { return nil }
-        self.init(address: .init(s_addr: .init(bigEndian: .init(bytes: (data[0], data[1], data[2], data[3])))))
+        self.init(address: .init(s_addr: .init(bytes: (data[0], data[1], data[2], data[3]))))
     }
     
     public var artNet: Data {
-        return address.s_addr.bigEndian.binaryData
+        return address.s_addr.binaryData
     }
     
     public static var length: Int { return 4 }
