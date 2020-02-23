@@ -103,7 +103,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     /// If number of inputs is not equal to number of outputs, the largest value is taken.
     /// Zero is a legal value if no input or output ports are implemented. The maximum value is 4.
     /// Nodes can ignore this field as the information is implicit in PortTypes[].
-    public var ports: UInt8
+    public var ports: UInt16
     
     /// This array defines the operation and protocol of each channel.
     ///
@@ -181,7 +181,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
                 shortName: String,
                 longName: String,
                 nodeReport: String,
-                ports: UInt8 = 0,
+                ports: UInt16 = 0,
                 portTypes: ChannelArray<Channel> = [],
                 inputStatus: ChannelArray<BitMaskOptionSet<InputStatus>> = [],
                 outputStatus: ChannelArray<BitMaskOptionSet<OutputStatus>> = [],
