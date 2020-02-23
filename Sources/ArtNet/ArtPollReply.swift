@@ -536,6 +536,15 @@ extension ArtPollReply.Channel: CustomStringConvertible {
     }
 }
 
+// MARK: - ExpressibleByIntegerLiteral
+
+extension ArtPollReply.Channel: ExpressibleByIntegerLiteral {
+    
+    public init(integerLiteral value: UInt8) {
+        self.init(rawValue: value)
+    }
+}
+
 // MARK: - ChannelProtocol
 
 public extension ArtPollReply {
