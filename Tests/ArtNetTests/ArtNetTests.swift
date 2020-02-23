@@ -22,17 +22,32 @@ final class ArtNetTests: XCTestCase {
     
     func testArtPoll() {
         
+        /**
+         Art-Net, Opcode: ArtPoll (0x2000)
+         Descriptor Header
+             ID: Art-Net
+             OpCode: ArtPoll (0x2000)
+             ProtVer: 14
+         ArtPoll packet
+             TalkToMe: 0x02, Send me ArtPollReply on change, Send diagnostics unicast: Broadcast
+                 .... ..1. = Send me ArtPollReply on change: Enabled
+                 .... .0.. = Send diagnostics messages: Disabled
+                 .... 0... = Send diagnostics unicast: Broadcast (0x0)
+             Priority: DpAll (0)
+         */
+        
         let data = Data([
             0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00, // Art-Net
             0x00, 0x20,                                     // Opcode: 0x2000
-            0x0E, 0x00,                                     // Protocol version: 14
+            0x00, 0x0E,                                     // Protocol version: 14
             0x02,                                           // TalkToMe: Diagnostics (0b01)
-            0x10])                                          // Diagnostic: Low (0x10)
+            0x00                                            // Diagnostic: DpAll (0)
+        ])
         
         do {
             let value = ArtPoll(
                 behavior: [.diagnostics],
-                priority: .low
+                priority: .all
             )
             
             XCTAssertEqual(value.protocolVersion, .current)
