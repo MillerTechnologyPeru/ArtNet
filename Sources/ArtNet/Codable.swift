@@ -15,7 +15,7 @@ public protocol ArtNetDecodable: Decodable {
     
     init?(artNet data: Data)
     
-    static var length: Int { get }
+    static var artNetLength: Int { get }
 }
 
 /// Art-Net Encodable type

@@ -119,7 +119,7 @@ extension Address.IPv4: ArtNetCodable {
         return address.s_addr.binaryData
     }
     
-    public static var length: Int { return 4 }
+    public static var artNetLength: Int { return 4 }
 }
 
 public extension Address {

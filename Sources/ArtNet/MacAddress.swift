@@ -215,4 +215,6 @@ extension MacAddress: ArtNetCodable {
     public var artNet: Data {
         return data
     }
+    
+    public static var artNetLength: Int { return length }
 }

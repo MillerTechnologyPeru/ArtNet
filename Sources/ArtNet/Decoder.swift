@@ -215,7 +215,7 @@ private extension ArtNetDecoder.Decoder {
     func readArtNetDecodable(_ type: ArtNetDecodable.Type) throws -> ArtNetDecodable {
         
         let offset = self.offset
-        let data = try read(type.length)
+        let data = try read(type.artNetLength)
         guard let value = type.init(artNet: data) else {
             throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Could not parse \(String(reflecting: type)) from \(data) at offset \(offset)"))
         }

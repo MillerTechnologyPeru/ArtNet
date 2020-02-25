@@ -471,7 +471,7 @@ extension ArtPollReply.ChannelArray: ArtNetCodable {
         return Data([bytes.0, bytes.1, bytes.2, bytes.3])
     }
     
-    public static var length: Int { return 4 }
+    public static var artNetLength: Int { return 4 }
 }
 
 // MARK: - Channel
