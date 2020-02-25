@@ -5,8 +5,6 @@
 //  Created by Alsey Coleman Miller on 2/21/20.
 //
 
-import Foundation
-
 internal struct ArtNetHeader: Codable, Equatable, Hashable {
     
     /// Array of 8 characters, the final character is a null termination.
@@ -46,20 +44,6 @@ extension ArtNetHeader.ID {
     
     /// Value = `‘A’ ‘r’ ‘t’ ‘-‘ ‘N’ ‘e’ ‘t’ 0x00`
     static let artNet: ArtNetHeader.ID = "Art-Net"
-}
-
-extension ArtNetHeader.ID {
-    
-    init?(data: Data) {
-        guard let string = data.withUnsafeBytes({
-            $0.baseAddress.flatMap { String(validatingUTF8: $0.assumingMemoryBound(to: CChar.self)) }
-        }) else { return nil }
-        self.rawValue = string
-    }
-    
-    var data: Data {
-        return Data(unsafeBitCast(rawValue.utf8CString, to: ContiguousArray<UInt8>.self))
-    }
 }
 
 // MARK: - CustomStringConvertible
