@@ -8,7 +8,8 @@ final class ArtNetTests: XCTestCase {
         ("testArtPoll", testArtPoll),
         ("testArtPollReply", testArtPollReply),
         ("testArtPollReplyChannel", testArtPollReplyChannel),
-        ("testArtDmx", testArtDmx)
+        ("testArtDmx", testArtDmx),
+        ("testArtTodRequest", testArtTodRequest)
     ]
     
     func testID() {
@@ -321,6 +322,53 @@ final class ArtNetTests: XCTestCase {
             var decoder = ArtNetDecoder()
             decoder.log = { print("Decoder:", $0) }
             let decodedValue = try decoder.decode(ArtDmx.self, from: data)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtTodRequest() {
+        
+        /**
+         Art-Net, Opcode: ArtTodRequest (0x8000)
+         Descriptor Header
+             ID: Art-Net
+             OpCode: ArtTodRequest (0x8000)
+             ProtVer: 14
+         ArtTodRequest packet
+             filler: 0000
+             spare: 00000000000000
+             Net: 0x00
+             Command: TodFull (0x00)
+             Address Count: 1
+             Address: 01
+         Excess Bytes: 000000000000000000000000000000000000000000000000…
+         */
+        
+        let data = Data([0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00, 0x00, 0x80, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        
+        let value = ArtTodRequest(net: 0x00, command: .todFull, addresses: [(0x01, 0x00)])
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        XCTAssertEqual(value.portAddresses, [0x01])
+        
+        do {
+            var encoder = ArtNetEncoder()
+            encoder.log = { print("Encoder:", $0) }
+            let encodedData = try encoder.encode(value)
+            
+            print(encodedData.hexString)
+            print(value)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            XCTAssertEqual(encodedData, data)
+            
+            var decoder = ArtNetDecoder()
+            decoder.log = { print("Decoder:", $0) }
+            let decodedValue = try decoder.decode(ArtTodRequest.self, from: data)
             XCTAssertEqual(decodedValue, value)
             
         } catch {

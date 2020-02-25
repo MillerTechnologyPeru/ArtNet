@@ -87,7 +87,7 @@ public extension ArtTodRequest {
     
     /// The array of Port-Address of the Output Gateway nodes that must respond to this packet.
     var portAddresses: [PortAddress] {
-        fatalError() // FIXME:
+        return addresses.map { PortAddress(universe: $0.universe, subnet: $0.subnet, net: net) }
     }
 }
 
@@ -142,6 +142,11 @@ public extension ArtTodRequest {
                 .enumerated()
                 .forEach { self[$0.offset] = $0.element }
         }
+        
+        public init?<C>(_ collection: C) where C: Collection, C.Element == Element {
+            guard collection.count <= AddressArray.maxLength else { return nil }
+            self.init(truncated: collection)
+        }
     }
 }
 
@@ -154,6 +159,7 @@ internal extension ArtTodRequest.AddressArray {
 
 public extension ArtTodRequest.AddressArray {
     
+    // Maximum number of elements.
     static var maxLength: Int { return 32 }
 }
 
@@ -212,7 +218,7 @@ extension ArtTodRequest.AddressArray {
 extension ArtTodRequest.AddressArray: Hashable {
     
     public func hash(into hasher: inout Hasher) {
-        forEach { ($0.universe.rawValue + $0.subnet.rawValue).hash(into: &hasher) }
+        indices.forEach { self[byte: $0].hash(into: &hasher) }
     }
 }
 
@@ -220,8 +226,9 @@ extension ArtTodRequest.AddressArray: Hashable {
 
 extension ArtTodRequest.AddressArray: ExpressibleByArrayLiteral {
     
-    public init(arrayLiteral elements: PortAddress...) {
-        fatalError()
+    public init(arrayLiteral elements: Element...) {
+        precondition(elements.count <= ArtTodRequest.AddressArray.maxLength)
+        self.init(truncated: elements)
     }
 }
 
@@ -230,11 +237,20 @@ extension ArtTodRequest.AddressArray: ExpressibleByArrayLiteral {
 extension ArtTodRequest.AddressArray: Codable {
     
     public init(from decoder: Decoder) throws {
-        fatalError()
+        // decode as 8-bit addresses
+        let array = try [UInt8](from: decoder)
+        guard array.count <= ArtTodRequest.AddressArray.maxLength else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Array can only \(ArtTodRequest.AddressArray.maxLength) addresses"))
+        }
+        // set values
+        self.init(count: array.count)
+        array.enumerated().forEach { self[byte: $0.offset] = $0.element }
     }
     
     public func encode(to encoder: Encoder) throws {
-        fatalError()
+        // encode as 8-bit addresses
+        var container = encoder.unkeyedContainer()
+        try indices.forEach { try container.encode(self[byte: $0]) }
     }
 }
 
@@ -261,7 +277,7 @@ extension ArtTodRequest.AddressArray: ArtNetCodable {
     }
     
     public var artNet: Data {
-        return Data([_count, ])
+        return Data([_count, elements.0, elements.1, elements.2, elements.3, elements.4, elements.5, elements.6, elements.7, elements.8, elements.9, elements.10, elements.11, elements.12, elements.13, elements.14, elements.15, elements.16, elements.17, elements.18, elements.19, elements.20, elements.21, elements.22, elements.23, elements.24, elements.25, elements.26, elements.27, elements.28, elements.29, elements.30, elements.31])
     }
 }
 
@@ -285,48 +301,30 @@ extension ArtTodRequest.AddressArray: RandomAccessCollection, MutableCollection 
     public subscript (index: Int) -> (universe: PortAddress.Universe, subnet: PortAddress.SubNet) {
         get {
             assert(index < Int(_count), "Invalid index \(index)")
-            let byte: UInt8
-            switch index {
-            case 0: byte = elements.0
-            case 1: byte = elements.1
-            case 2: byte = elements.2
-            case 3: byte = elements.3
-            case 4: byte = elements.4
-            case 5: byte = elements.5
-            case 6: byte = elements.6
-            case 7: byte = elements.7
-            case 8: byte = elements.8
-            case 9: byte = elements.9
-            case 10: byte = elements.10
-            case 11: byte = elements.11
-            case 12: byte = elements.12
-            case 13: byte = elements.13
-            case 14: byte = elements.14
-            case 15: byte = elements.15
-            case 16: byte = elements.16
-            case 17: byte = elements.17
-            case 18: byte = elements.18
-            case 19: byte = elements.19
-            case 20: byte = elements.20
-            case 21: byte = elements.21
-            case 22: byte = elements.22
-            case 23: byte = elements.23
-            case 24: byte = elements.24
-            case 25: byte = elements.25
-            case 26: byte = elements.26
-            case 27: byte = elements.27
-            case 28: byte = elements.28
-            case 29: byte = elements.29
-            case 30: byte = elements.30
-            case 31: byte = elements.31
-            default: fatalError("Invalid index \(index)")
-            }
-            let universe = PortAddress.Universe(rawValue: byte) // FIXME:
-            let subnet = PortAddress.SubNet(rawValue: byte)
+            let byte = self[byte: index]
+            let universe = PortAddress.Universe(unsafe: byte & 0x0F)
+            let subnet = PortAddress.SubNet(unsafe: byte >> 4)
             return (universe, subnet)
         }
         set {
-            fatalError()
+            assert(index < Int(_count), "Invalid index \(index)")
+            let byte = newValue.universe.rawValue + (newValue.subnet.rawValue << 4)
+            self[byte: index] = byte
+        }
+    }
+    
+    internal private(set) subscript (byte index: Int) -> UInt8 {
+        get {
+            precondition(index < 32, "Invalid index \(index)")
+            return withUnsafePointer(to: elements, {
+                $0.withMemoryRebound(to: UInt8.self, capacity: 32, { $0[index] })
+            })
+        }
+        set {
+            precondition(index < 32, "Invalid index \(index)")
+            withUnsafeMutablePointer(to: &elements, {
+                $0.withMemoryRebound(to: UInt8.self, capacity: 32, { $0[index] = newValue })
+            })
         }
     }
     
