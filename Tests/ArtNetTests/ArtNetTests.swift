@@ -11,6 +11,18 @@ final class ArtNetTests: XCTestCase {
         ("testArtDmx", testArtDmx),
         ("testArtTodRequest", testArtTodRequest)
     ]
+        
+    lazy var encoder: ArtNetEncoder = {
+        var encoder = ArtNetEncoder()
+        encoder.log = { print("Encoder:", $0) }
+        return encoder
+    }()
+    
+    lazy var decoder: ArtNetDecoder = {
+        var decoder = ArtNetDecoder()
+        decoder.log = { print("Decoder:", $0) }
+        return decoder
+    }()
     
     func testID() {
         
@@ -55,8 +67,6 @@ final class ArtNetTests: XCTestCase {
             
             XCTAssertEqual(value.protocolVersion, .current)
             
-            var encoder = ArtNetEncoder()
-            encoder.log = { print("Encoder:", $0) }
             let encodedData = try encoder.encode(value)
             
             print(encodedData.hexString)
@@ -65,8 +75,6 @@ final class ArtNetTests: XCTestCase {
             XCTAssertFalse(encodedData.isEmpty)
             XCTAssertEqual(encodedData, data)
             
-            var decoder = ArtNetDecoder()
-            decoder.log = { print("Decoder:", $0) }
             let decodedValue = try decoder.decode(ArtPoll.self, from: data)
             XCTAssertEqual(decodedValue, value)
             
@@ -186,8 +194,6 @@ final class ArtNetTests: XCTestCase {
         XCTAssertEqual(value, value, "Equatable is not working")
         
         do {
-            var encoder = ArtNetEncoder()
-            encoder.log = { print("Encoder:", $0) }
             let encodedData = try encoder.encode(value)
             
             print(encodedData.hexString)
@@ -196,8 +202,6 @@ final class ArtNetTests: XCTestCase {
             XCTAssertFalse(encodedData.isEmpty)
             XCTAssertEqual(encodedData, data)
             
-            var decoder = ArtNetDecoder()
-            decoder.log = { print("Decoder:", $0) }
             let decodedValue = try decoder.decode(ArtPollReply.self, from: data)
             XCTAssertEqual(decodedValue, value)
             XCTAssertEqual(decodedValue.filler, Data(repeating: 0x00, count: 26), "Invalid filler (\(decodedValue.filler.count) bytes) \(decodedValue.filler.hexString)")
@@ -309,8 +313,6 @@ final class ArtNetTests: XCTestCase {
         XCTAssertEqual(value.protocolVersion, .current)
         
         do {
-            var encoder = ArtNetEncoder()
-            encoder.log = { print("Encoder:", $0) }
             let encodedData = try encoder.encode(value)
             
             print(encodedData.hexString)
@@ -319,8 +321,6 @@ final class ArtNetTests: XCTestCase {
             XCTAssertFalse(encodedData.isEmpty)
             XCTAssertEqual(encodedData, data)
             
-            var decoder = ArtNetDecoder()
-            decoder.log = { print("Decoder:", $0) }
             let decodedValue = try decoder.decode(ArtDmx.self, from: data)
             XCTAssertEqual(decodedValue, value)
             
@@ -354,10 +354,13 @@ final class ArtNetTests: XCTestCase {
         
         XCTAssertEqual(value.protocolVersion, .current)
         XCTAssertEqual(value.portAddresses, [0x01])
+        XCTAssertEqual(value.addresses, [(0x01, 0x00)])
+        XCTAssertNotEqual(value.addresses, [])
+        XCTAssertEqual(value.addresses, [(PortAddress.Universe(rawValue: 1)!, PortAddress.SubNet(rawValue: 0)!)])
+        XCTAssertEqual(value.addresses.hashValue, value.addresses.hashValue)
+        XCTAssertNotEqual(value.addresses.hashValue, 0)
         
         do {
-            var encoder = ArtNetEncoder()
-            encoder.log = { print("Encoder:", $0) }
             let encodedData = try encoder.encode(value)
             
             print(encodedData.hexString)
@@ -366,8 +369,6 @@ final class ArtNetTests: XCTestCase {
             XCTAssertFalse(encodedData.isEmpty)
             XCTAssertEqual(encodedData, data)
             
-            var decoder = ArtNetDecoder()
-            decoder.log = { print("Decoder:", $0) }
             let decodedValue = try decoder.decode(ArtTodRequest.self, from: data)
             XCTAssertEqual(decodedValue, value)
             
