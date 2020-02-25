@@ -23,7 +23,6 @@ public struct OEMCode: RawRepresentable, Equatable, Hashable, Codable {
 extension OEMCode: ExpressibleByIntegerLiteral {
     
     public init(integerLiteral value: UInt16) {
-        
         self.init(rawValue: value)
     }
 }
