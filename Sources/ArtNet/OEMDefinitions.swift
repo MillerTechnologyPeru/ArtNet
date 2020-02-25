@@ -442,7 +442,7 @@ internal extension OEMCode {
         0x2A4E: "Oem_tongxinkeji_plamp_1",
         0x2A1B: "Oem_tristan_leonid_zoltan_thiltges_lightsculptures_1",
         0x2A4C: "Oem_tx_plamp_1",
-        0x2A4D: "Oem_tx_plamp_1",
+        0x2A4D: "Oem_tx_plamp_2",
         0x2A13: "Oem_vanray_dmx_link_pro_1",
         0x29FD: "Oem_vibesta_bv_rtx1_1",
         0x29D7: "Oem_vl_software_arthur_maxi_1",
