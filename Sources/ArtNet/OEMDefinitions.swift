@@ -50,37 +50,6 @@ public extension OEMCode {
     }
 }
 
-public extension OEMCode {
-    
-    /// Art-Net OEM Code metadata
-    struct Metadata: Equatable, Hashable {
-        
-        /// Mnemonic
-        let mnemonic: String
-        
-        /// Manufacturer
-        let manufacturer: String
-        
-        /// Product name
-        let product: String
-        
-        /// DMX in
-        let dmxIn: Int
-        
-        /// DMX out
-        let dmxOut: Int
-        
-        /// Are ports Physical?
-        let hasPhysicalPorts: Bool
-        
-        /// Is RDM supported
-        let isRDMSupported: Bool
-        
-        /// Website
-        let url: URL?
-    }
-}
-
 internal extension OEMCode {
     
     // https://art-net.org.uk/join-the-club/oem-code-listing/
