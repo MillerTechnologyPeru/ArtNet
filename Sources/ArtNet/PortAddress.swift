@@ -17,10 +17,15 @@
  */
 public struct PortAddress: RawRepresentable, Equatable, Hashable, Codable {
     
-    public private(set) var rawValue: UInt16
+    public let rawValue: UInt16
     
     public init?(rawValue: UInt16) {
         guard PortAddress.validate(rawValue) else { return nil }
+        self.rawValue = rawValue
+    }
+    
+    internal init(unsafe rawValue: UInt16) {
+        assert(PortAddress.validate(rawValue), "Must be 15-bit number")
         self.rawValue = rawValue
     }
 }
@@ -28,33 +33,39 @@ public struct PortAddress: RawRepresentable, Equatable, Hashable, Codable {
 public extension PortAddress {
     
     static var zero: PortAddress { return 0x00 as PortAddress }
+    
+    static var min: PortAddress { return .zero }
+    
+    static var max: PortAddress { return 0b0111111111111111 as PortAddress }
 }
 
 public extension PortAddress {
     
     /// Bits 3-0
     var universe: Universe {
-        get { fatalError() }
-        set { fatalError() }
+        return .init(unsafe: UInt8(rawValue & 0x000F))
     }
     
     /// Bits 7-4
     var subnet: SubNet {
-        get { fatalError() }
-        set { fatalError() }
+        return .init(unsafe: UInt8(rawValue & 0x00F0) >> 4)
     }
     
     /// Bits 14-8
     var net: Net {
-        get { fatalError() }
-        set { fatalError() }
+        return .init(unsafe: UInt8(rawValue >> 8))
     }
     
+    /// Initialize with the specified Universe, Subnet and Net.
     init(universe: Universe, subnet: SubNet, net: Net) {
-        self = .zero
-        self.universe = universe
-        self.subnet = subnet
-        self.net = net
+        var value: UInt16 = 0
+        value += UInt16(universe.rawValue)
+        value += UInt16(subnet.rawValue) << 4
+        value += UInt16(net.rawValue) << 8
+        self.init(unsafe: value)
+        assert(self.universe == universe)
+        assert(self.subnet == subnet)
+        assert(self.net == net)
     }
 }
 
@@ -62,7 +73,7 @@ internal extension PortAddress {
     
     /// Verify the value is 15-bits
     static func validate(_ rawValue: UInt16) -> Bool {
-        return true // TODO: 15-bit validation
+        return rawValue >> 15 == 0
     }
 }
 
@@ -71,7 +82,7 @@ internal extension PortAddress {
 extension PortAddress: CustomStringConvertible {
     
     public var description: String {
-        return rawValue.description // TODO: Print address
+        return "\(type(of: self))(universe: \(universe), subnet: \(subnet), net: \(net))"
     }
 }
 
@@ -80,8 +91,7 @@ extension PortAddress: CustomStringConvertible {
 extension PortAddress: ExpressibleByIntegerLiteral {
     
     public init(integerLiteral value: UInt16) {
-        assert(PortAddress.validate(value), "Must be 15-bit number")
-        self.rawValue = value
+        self.init(unsafe: value)
     }
 }
 
@@ -91,13 +101,28 @@ extension PortAddress: ExpressibleByIntegerLiteral {
 
 public extension PortAddress {
     
+    /// 4-bit Universe nibble
     struct Universe: RawRepresentable, Equatable, Hashable, Codable {
         
-        public var rawValue: UInt8
+        public let rawValue: UInt8
         
-        public init(rawValue: UInt8) {
+        public init?(rawValue: UInt8) {
+            guard PortAddress.Universe.validate(rawValue) else { return nil }
             self.rawValue = rawValue
         }
+        
+        internal init(unsafe rawValue: UInt8) {
+            assert(PortAddress.Universe.validate(rawValue), "Must be 4-bit number")
+            self.rawValue = rawValue
+        }
+    }
+}
+
+internal extension PortAddress.Universe {
+    
+    /// Verify the value is 4-bits
+    static func validate(_ rawValue: UInt8) -> Bool {
+        return rawValue >> 4 == 0
     }
 }
 
@@ -106,7 +131,7 @@ public extension PortAddress {
 extension PortAddress.Universe: CustomStringConvertible {
     
     public var description: String {
-        return rawValue.description // TODO: Print address
+        return rawValue.description
     }
 }
 
@@ -115,7 +140,7 @@ extension PortAddress.Universe: CustomStringConvertible {
 extension PortAddress.Universe: ExpressibleByIntegerLiteral {
     
     public init(integerLiteral value: UInt8) {
-        self.init(rawValue: value)
+        self.init(unsafe: value)
     }
 }
 
@@ -123,13 +148,28 @@ extension PortAddress.Universe: ExpressibleByIntegerLiteral {
 
 public extension PortAddress {
     
+    /// 4-bit Sub-Net
     struct SubNet: RawRepresentable, Equatable, Hashable, Codable {
         
-        public var rawValue: UInt8
+        public let rawValue: UInt8
         
-        public init(rawValue: UInt8) {
+        public init?(rawValue: UInt8) {
+            guard PortAddress.SubNet.validate(rawValue) else { return nil }
             self.rawValue = rawValue
         }
+        
+        internal init(unsafe rawValue: UInt8) {
+            assert(PortAddress.SubNet.validate(rawValue), "Must be 4-bit number")
+            self.rawValue = rawValue
+        }
+    }
+}
+
+internal extension PortAddress.SubNet {
+    
+    /// Verify the value is 4-bits
+    static func validate(_ rawValue: UInt8) -> Bool {
+        return rawValue >> 4 == 0
     }
 }
 
@@ -138,7 +178,7 @@ public extension PortAddress {
 extension PortAddress.SubNet: CustomStringConvertible {
     
     public var description: String {
-        return rawValue.description // TODO: Print address
+        return rawValue.description
     }
 }
 
@@ -147,7 +187,7 @@ extension PortAddress.SubNet: CustomStringConvertible {
 extension PortAddress.SubNet: ExpressibleByIntegerLiteral {
     
     public init(integerLiteral value: UInt8) {
-        self.init(rawValue: value)
+        self.init(unsafe: value)
     }
 }
 
@@ -155,13 +195,28 @@ extension PortAddress.SubNet: ExpressibleByIntegerLiteral {
 
 public extension PortAddress {
     
+    /// 7-bit Net
     struct Net: RawRepresentable, Equatable, Hashable, Codable {
         
-        public var rawValue: UInt8
+        public let rawValue: UInt8
         
-        public init(rawValue: UInt8) {
+        public init?(rawValue: UInt8) {
+            guard PortAddress.Net.validate(rawValue) else { return nil }
             self.rawValue = rawValue
         }
+        
+        internal init(unsafe rawValue: UInt8) {
+            assert(PortAddress.Net.validate(rawValue), "Must be 7-bit number")
+            self.rawValue = rawValue
+        }
+    }
+}
+
+internal extension PortAddress.Net {
+    
+    /// Verify the value is 7-bits
+    static func validate(_ rawValue: UInt8) -> Bool {
+        return rawValue >> 7 == 0
     }
 }
 
@@ -170,7 +225,7 @@ public extension PortAddress {
 extension PortAddress.Net: CustomStringConvertible {
     
     public var description: String {
-        return rawValue.description // TODO: Print address
+        return rawValue.description
     }
 }
 
@@ -179,6 +234,6 @@ extension PortAddress.Net: CustomStringConvertible {
 extension PortAddress.Net: ExpressibleByIntegerLiteral {
     
     public init(integerLiteral value: UInt8) {
-        self.init(rawValue: value)
+        self.init(unsafe: value)
     }
 }
