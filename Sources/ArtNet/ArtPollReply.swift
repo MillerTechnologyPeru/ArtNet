@@ -51,11 +51,11 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     
     /// Bits 14-8 of the 15 bit Port-Address are encoded into the bottom 7 bits of this field.
     /// This is used in combination with SubSwitch and SwIn[] or SwOut[] to produce the full universe address.
-    public var netSwitch: UInt8
+    public var netSwitch: ArtNet.PortAddress.Net
     
     /// Bits 7-4 of the 15 bit Port-Address are encoded into the bottom 4 bits of this field.
     /// This is used in combination with NetSwitch and SwIn[] or SwOut[] to produce the full universe address.
-    public var subSwitch: UInt8
+    public var subSwitch: ArtNet.PortAddress.SubNet
     
     /// The Oem word describes the equipment vendor and the feature set available.
     /// Bit 15 high indicates extended features available.
@@ -172,8 +172,8 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     
     public init(address: Address.IPv4,
                 firmwareVersion: UInt16 = 0,
-                netSwitch: UInt8 = 0,
-                subSwitch: UInt8 = 0,
+                netSwitch: ArtNet.PortAddress.Net = 0,
+                subSwitch: ArtNet.PortAddress.SubNet = 0,
                 oem: OEMCode,
                 ubeaVersion: UInt8 = 0,
                 status1: BitMaskOptionSet<Status1> = [],
