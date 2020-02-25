@@ -62,6 +62,7 @@ final class PacketTests: XCTestCase {
             )
             
             XCTAssertEqual(value.protocolVersion, .current)
+            XCTAssertEqual(value.protocolVersion, 14)
             
             let encodedData = try encoder.encode(value)
             
@@ -188,6 +189,11 @@ final class PacketTests: XCTestCase {
         XCTAssertEqual(value.video, false)
         XCTAssertEqual(value.filler.count, 26)
         XCTAssertEqual(value, value, "Equatable is not working")
+        XCTAssertEqual(value.macAddress.hashValue, value.macAddress.hashValue)
+        XCTAssertEqual(value.macAddress.description, "98:84:E3:9A:05:C9")
+        XCTAssertNotEqual(value.macAddress, .zero)
+        XCTAssertNotEqual(value.macAddress, .max)
+        XCTAssertNotEqual(value.macAddress, .min)
         
         do {
             let encodedData = try encoder.encode(value)
