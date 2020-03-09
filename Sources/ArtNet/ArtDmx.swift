@@ -30,7 +30,7 @@ public struct ArtDmx: ArtNetPacket, Equatable, Hashable, Codable {
     public static var opCode: OpCode { return .dmx }
     
     public static let formatting = ArtNetFormatting(
-        littleEndian: [CodingKeys.universe],
+        littleEndian: [CodingKeys.portAddress],
         data: [.lightingData: .lengthSpecifier]
     )
     
@@ -53,20 +53,20 @@ public struct ArtDmx: ArtNetPacket, Equatable, Hashable, Codable {
     public var physical: UInt8
     
     /// 15 bit Port-Address to which this packet is destined.
-    public var universe: UInt16
+    public var portAddress: PortAddress
     
     /// A variable length array of DMX512 lighting data.
     public var lightingData: Data
     
     public init(sequence: UInt8 = 0,
                 physical: UInt8 = 0,
-                universe: UInt16 = 0,
+                portAddress: PortAddress = 0,
                 lightingData: Data = Data()) {
         
         self.protocolVersion = .current
         self.sequence = sequence
         self.physical = physical
-        self.universe = universe
+        self.portAddress = portAddress
         self.lightingData = lightingData
     }
 }
