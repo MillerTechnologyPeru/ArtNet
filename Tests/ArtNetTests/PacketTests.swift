@@ -308,7 +308,7 @@ final class PacketTests: XCTestCase {
         let value = ArtDmx(
             sequence: 96,
             physical: 0,
-            universe: 257,
+            portAddress: 257,
             lightingData: lightingData
         )
         
