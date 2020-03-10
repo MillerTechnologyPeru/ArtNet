@@ -5,7 +5,8 @@ final class ArtNetTests: XCTestCase {
     
     static let allTests = [
         ("testID", testID),
-        ("testPortAddress", testPortAddress)
+        ("testPortAddress", testPortAddress),
+        ("testAddress", testAddress)
     ]
     
     func testID() {
