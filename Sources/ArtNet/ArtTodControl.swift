@@ -10,7 +10,7 @@ import Foundation
 /**
  This packed is used to send RDM control parameters over Art-Net. the response is ArtTodData
  */
-struct ArtTodControl: ArtNetPacket, Equatable, Hashable, Codable {
+public struct ArtTodControl: ArtNetPacket, Equatable, Hashable, Codable {
     
     /// ArtNet packet code.
     public static var opCode: OpCode { return .todControl }
@@ -56,7 +56,7 @@ struct ArtTodControl: ArtNetPacket, Equatable, Hashable, Codable {
     
     public init(net: PortAddress.Net,
                 command: Command = .none,
-                addresses: Address = 0) {
+                address: Address = 0) {
         
         self.protocolVersion = .current
         self.filler1 = 0

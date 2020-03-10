@@ -16,7 +16,8 @@ final class PacketTests: XCTestCase {
         ("testArtPollReply", testArtPollReply),
         ("testArtPollReplyChannel", testArtPollReplyChannel),
         ("testArtDmx", testArtDmx),
-        ("testArtTodRequest", testArtTodRequest)
+        ("testArtTodRequest", testArtTodRequest),
+        ("testArtTodControl",testArtTodControl)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -372,6 +373,50 @@ final class PacketTests: XCTestCase {
             XCTAssertEqual(encodedData, data)
             
             let decodedValue = try decoder.decode(ArtTodRequest.self, from: data)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtTodControl() {
+        
+        /**
+        Art-Net, Opcode: ArtTodControl (0x8200)
+        Descriptor Header
+            ID: Art-Net
+            OpCode: ArtTodControl (0x8200)
+            ProtVer: 14
+        ArtTodControl packet
+            filler: 0000
+            spare: 00000000000000
+            Net: 0x00
+            Command: None (0x00)
+            Address: 00
+        */
+        
+        let data = Data([0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00, 0x00, 0x82, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00])
+        
+        let value = ArtTodControl(net: 0x01, command: .none, address: 0x00)
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        XCTAssertEqual(value.net, 0x01)
+        XCTAssertEqual(value.address, 0x00)
+        XCTAssertEqual(value.command, .none)
+        XCTAssertNotEqual(value.command, .flush)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            
+            print(encodedData.hexString)
+            print(value)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            XCTAssertEqual(encodedData, data)
+            
+            let decodedValue = try decoder.decode(ArtTodControl.self, from: data)
             XCTAssertEqual(decodedValue, value)
             
         } catch {
