@@ -157,7 +157,7 @@ final class PacketTests: XCTestCase {
         XCTAssertEqual(data.count, 239)
         
         let value = ArtPollReply(
-            address: Address.IPv4(rawValue: "192.168.100.113")!,
+            address: NetworkAddress.IPv4(rawValue: "192.168.100.113")!,
             firmwareVersion: 0x0100,
             netSwitch: 0x01,
             subSwitch: 0x00,
@@ -180,7 +180,7 @@ final class PacketTests: XCTestCase {
             remote: [],
             style: .node, // StNode (Art-Net to DMX device) (0x00)
             macAddress: MacAddress(rawValue: "98:84:E3:9A:05:C9")!, // MAC: TexasIns_9a:05:c9
-            bindAddress: Address.IPv4(rawValue: "192.168.100.113")!,
+            bindAddress: NetworkAddress.IPv4(rawValue: "192.168.100.113")!,
             bindIndex: 0,
             status2: [.webConfiguration, .dhcpConfigured, .dhcpCapable] // 0x07, Web configuration supported, DHCP configuration used, DHCP configuration supported, Port-Address size: 8bit
         )
@@ -352,13 +352,13 @@ final class PacketTests: XCTestCase {
         
         let data = Data([0x41, 0x72, 0x74, 0x2D, 0x4E, 0x65, 0x74, 0x00, 0x00, 0x80, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
         
-        let value = ArtTodRequest(net: 0x00, command: .todFull, addresses: [(0x01, 0x00)])
+        let value = ArtTodRequest(net: 0x00, command: .todFull, addresses: [0x01])
         
         XCTAssertEqual(value.protocolVersion, .current)
         XCTAssertEqual(value.portAddresses, [0x01])
-        XCTAssertEqual(value.addresses, [(0x01, 0x00)])
+        XCTAssertEqual(value.addresses, [0x01])
         XCTAssertNotEqual(value.addresses, [])
-        XCTAssertEqual(value.addresses, [(PortAddress.Universe(rawValue: 1)!, PortAddress.SubNet(rawValue: 0)!)])
+        XCTAssertEqual(value.addresses, [Address(universe: PortAddress.Universe(rawValue: 1)!, subnet: PortAddress.SubNet(rawValue: 0)!)])
         XCTAssertEqual(value.addresses.hashValue, value.addresses.hashValue)
         XCTAssertNotEqual(value.addresses.hashValue, 0)
         

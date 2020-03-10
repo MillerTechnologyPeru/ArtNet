@@ -38,7 +38,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     /// Node’s IP address.
     ///
     /// When binding is implemented, bound nodes may share the root node’s IP Address and the BindIndex is used to differentiate the nodes.
-    public var address: Address.IPv4
+    public var address: NetworkAddress.IPv4
     
     /// The Port is always 0x1936
     public let port: UInt16
@@ -157,7 +157,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     public var macAddress: MacAddress
     
     /// If this unit is part of a larger or modular product, this is the IP of the root device.
-    public var bindAddress: Address.IPv4
+    public var bindAddress: NetworkAddress.IPv4
     
     /// This number represents the order of bound devices. A lower number means closer to root device. A value of 1 means root device.
     public var bindIndex: UInt8
@@ -170,7 +170,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     
     // MARK: - Initialization
     
-    public init(address: Address.IPv4,
+    public init(address: NetworkAddress.IPv4,
                 firmwareVersion: UInt16 = 0,
                 netSwitch: ArtNet.PortAddress.Net = 0,
                 subSwitch: ArtNet.PortAddress.SubNet = 0,
@@ -191,7 +191,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
                 remote: BinaryArray = false,
                 style: Style = .node,
                 macAddress: MacAddress,
-                bindAddress: Address.IPv4 = .zero,
+                bindAddress: NetworkAddress.IPv4 = .zero,
                 bindIndex: UInt8 = 0,
                 status2: BitMaskOptionSet<Status2> = []) {
         

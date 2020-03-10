@@ -35,4 +35,14 @@ final class ArtNetTests: XCTestCase {
         XCTAssertNil(PortAddress.SubNet(rawValue: 0xF0))
         XCTAssertNil(PortAddress.Net(rawValue: 0xFF))
     }
+    
+    func testAddress() {
+        
+        let address = Address(universe: 1, subnet: 1)
+        XCTAssertEqual(address, 0x11)
+        XCTAssertNotNil(Address(rawValue: 0x11))
+        XCTAssertEqual(address.universe, 1)
+        XCTAssertEqual(address.subnet, 1)
+        XCTAssertEqual(address.description, "Address(universe: 1, subnet: 1)")
+    }
 }

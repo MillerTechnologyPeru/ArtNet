@@ -168,7 +168,7 @@ public extension ArtTodRequest.AddressArray {
 extension ArtTodRequest.AddressArray: CustomStringConvertible {
     
     public var description: String {
-        return "[" + reduce("", { $0 + ($0.isEmpty ? "" : ", ") + "(universe: \($1.universe), subnet: \($1.subnet))" }) + "]"
+        return "[" + reduce("", { $0 + ($0.isEmpty ? "" : ", ") + $1.description }) + "]"
     }
 }
 
@@ -298,18 +298,15 @@ extension ArtTodRequest.AddressArray: RandomAccessCollection, MutableCollection 
         return numericCast(_count)
     }
     
-    public subscript (index: Int) -> (universe: PortAddress.Universe, subnet: PortAddress.SubNet) {
+    public subscript (index: Int) -> Address {
         get {
             assert(index < Int(_count), "Invalid index \(index)")
             let byte = self[byte: index]
-            let universe = PortAddress.Universe(unsafe: byte & 0x0F)
-            let subnet = PortAddress.SubNet(unsafe: byte >> 4)
-            return (universe, subnet)
+            return Address(rawValue: byte)
         }
         set {
             assert(index < Int(_count), "Invalid index \(index)")
-            let byte = newValue.universe.rawValue + (newValue.subnet.rawValue << 4)
-            self[byte: index] = byte
+            self[byte: index] = newValue.rawValue
         }
     }
     

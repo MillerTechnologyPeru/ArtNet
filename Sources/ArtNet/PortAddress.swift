@@ -237,3 +237,49 @@ extension PortAddress.Net: ExpressibleByIntegerLiteral {
         self.init(unsafe: value)
     }
 }
+
+// MARK: - Address
+
+public struct Address: RawRepresentable, Equatable, Hashable, Codable {
+    
+    public let rawValue: UInt8
+    
+    public init(rawValue: UInt8) {
+        self.rawValue = rawValue
+    }
+}
+
+public extension Address {
+    
+    var universe: PortAddress.Universe {
+        return PortAddress.Universe(unsafe: rawValue & 0x0F)
+    }
+    
+    var subnet: PortAddress.SubNet {
+        return PortAddress.SubNet(unsafe: rawValue >> 4)
+    }
+    
+    init(universe: PortAddress.Universe, subnet: PortAddress.SubNet) {
+        self.init(rawValue: universe.rawValue + (subnet.rawValue << 4))
+        assert(self.universe == universe)
+        assert(self.subnet == subnet)
+    }
+}
+
+// MARK: CustomStringConvertible
+
+extension Address: CustomStringConvertible {
+    
+    public var description: String {
+        return "\(type(of: self))(universe: \(universe), subnet: \(subnet))"
+    }
+}
+
+// MARK: ExpressibleByIntegerLiteral
+
+extension Address: ExpressibleByIntegerLiteral {
+    
+    public init(integerLiteral value: UInt8) {
+        self.init(rawValue: value)
+    }
+}

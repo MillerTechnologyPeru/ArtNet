@@ -14,13 +14,13 @@ import Glibc
 #endif
 
 /// Network Address
-public enum Address: Equatable, Hashable {
+public enum NetworkAddress: Equatable, Hashable {
     
     case ipv4(IPv4)
     case ipv6(IPv6)
 }
 
-extension Address: CustomStringConvertible {
+extension NetworkAddress: CustomStringConvertible {
     
     public var description: String {
         
@@ -31,7 +31,7 @@ extension Address: CustomStringConvertible {
     }
 }
 
-public protocol AddressProtocol: RawRepresentable {
+public protocol NetworkAddressProtocol: RawRepresentable {
     
     associatedtype SocketAddress
     
@@ -44,14 +44,14 @@ public protocol AddressProtocol: RawRepresentable {
     var rawValue: String { get }
 }
 
-extension AddressProtocol where Self: CustomStringConvertible {
+extension NetworkAddressProtocol where Self: CustomStringConvertible {
     
     public var description: String {
         return rawValue
     }
 }
 
-extension AddressProtocol where Self: Codable {
+extension NetworkAddressProtocol where Self: Codable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -68,9 +68,9 @@ extension AddressProtocol where Self: Codable {
     }
 }
 
-public extension Address {
+public extension NetworkAddress {
     
-    struct IPv4: AddressProtocol, Equatable, Codable, CustomStringConvertible {
+    struct IPv4: NetworkAddressProtocol, Equatable, Codable, CustomStringConvertible {
         
         public let address: in_addr
         
@@ -80,13 +80,13 @@ public extension Address {
     }
 }
 
-public extension Address.IPv4 {
+public extension NetworkAddress.IPv4 {
     
     /// Zero address
-    static var zero: Address.IPv4 { return .init(address: in_addr(s_addr: 0x00)) }
+    static var zero: NetworkAddress.IPv4 { return .init(address: in_addr(s_addr: 0x00)) }
 }
 
-extension Address.IPv4: RawRepresentable {
+extension NetworkAddress.IPv4: RawRepresentable {
     
     public init?(rawValue: String) {
         
@@ -101,14 +101,14 @@ extension Address.IPv4: RawRepresentable {
     }
 }
 
-extension Address.IPv4: Hashable {
+extension NetworkAddress.IPv4: Hashable {
     
     public var hashValue: Int {
         return unsafeBitCast(address, to: UInt32.self).hashValue
     }
 }
 
-extension Address.IPv4: ArtNetCodable {
+extension NetworkAddress.IPv4: ArtNetCodable {
     
     public init?(artNet data: Data) {
         guard data.count == 4 else { return nil }
@@ -122,9 +122,9 @@ extension Address.IPv4: ArtNetCodable {
     public static var artNetLength: Int { return 4 }
 }
 
-public extension Address {
+public extension NetworkAddress {
     
-    struct IPv6: AddressProtocol, Equatable, Codable, CustomStringConvertible {
+    struct IPv6: NetworkAddressProtocol, Equatable, Codable, CustomStringConvertible {
         
         public let address: in6_addr
         
@@ -134,7 +134,7 @@ public extension Address {
     }
 }
 
-extension Address.IPv6: RawRepresentable {
+extension NetworkAddress.IPv6: RawRepresentable {
     
     public init?(rawValue: String) {
         
@@ -149,7 +149,7 @@ extension Address.IPv6: RawRepresentable {
     }
 }
 
-extension Address.IPv6: Hashable {
+extension NetworkAddress.IPv6: Hashable {
     
     public var hashValue: Int {
         let bit128Value = unsafeBitCast(address, to: uuid_t.self)
