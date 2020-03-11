@@ -76,6 +76,16 @@ public struct ArtTodControl: ArtNetPacket, Equatable, Hashable, Codable {
     }
 }
 
+public extension ArtTodControl {
+    
+    var portAddress: PortAddress {
+        return PortAddress(
+            universe: address.universe,
+            subnet: address.subnet,
+            net: net)
+    }
+}
+
 // MARK: - Supporting Types
 
 // MARK: - Command

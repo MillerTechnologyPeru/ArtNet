@@ -18,7 +18,8 @@ final class PacketTests: XCTestCase {
         ("testArtDmx", testArtDmx),
         ("testArtTodRequest", testArtTodRequest),
         ("testArtTodControl", testArtTodControl),
-        ("testArtRdm", testArtRdm)
+        ("testArtRdm", testArtRdm),
+        ("testArtTodData",testArtTodData)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -407,6 +408,7 @@ final class PacketTests: XCTestCase {
         XCTAssertEqual(value.address, 0x00)
         XCTAssertEqual(value.command, .none)
         XCTAssertNotEqual(value.command, .flush)
+        XCTAssertEqual(value.address, Address(universe: value.portAddress.universe, subnet: value.portAddress.subnet))
         
         do {
             let encodedData = try encoder.encode(value)
