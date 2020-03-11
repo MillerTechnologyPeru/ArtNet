@@ -17,8 +17,8 @@ final class PacketTests: XCTestCase {
         ("testArtPollReplyChannel", testArtPollReplyChannel),
         ("testArtDmx", testArtDmx),
         ("testArtTodRequest", testArtTodRequest),
-        ("testArtTodControl",testArtTodControl),
-        ("testArtRdm",testArtRdm)
+        ("testArtTodControl", testArtTodControl),
+        ("testArtRdm", testArtRdm)
     ]
     
     lazy var encoder: ArtNetEncoder = {
