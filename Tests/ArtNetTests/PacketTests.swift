@@ -18,7 +18,8 @@ final class PacketTests: XCTestCase {
         ("testArtDmx", testArtDmx),
         ("testArtTodRequest", testArtTodRequest),
         ("testArtTodControl", testArtTodControl),
-        ("testArtRdm", testArtRdm)
+        ("testArtRdm", testArtRdm),
+        ("testArtRdmSub", testArtRdmSub)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -491,6 +492,41 @@ final class PacketTests: XCTestCase {
             //XCTAssertEqual(encodedData, data)
             
             let decodedValue = try decoder.decode(ArtTodData.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtRdmSub() {
+        
+        let value = ArtRdmSub(
+            rdmVersion: .standard,
+            uid: .max,
+            commandClass: .set,
+            parameterID: 1,
+            subDevice: 0,
+            subCount: 1,
+            data: Data([0x00, 0x01])
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        
+        XCTAssertEqual(value.commandData, [0x01])
+        XCTAssertEqual(value.commandData.count, Int(value.subCount))
+        XCTAssertEqual(value.rdmVersion, .standard)
+        XCTAssertNotEqual(value.rdmVersion, .draft)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, data)
+            
+            let decodedValue = try decoder.decode(ArtRdmSub.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
             
         } catch {
