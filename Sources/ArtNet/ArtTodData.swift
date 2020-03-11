@@ -74,7 +74,7 @@ public struct ArtTodData: ArtNetPacket, Equatable, Hashable, Codable {
     public var blockCount: UInt8
     
     /// Array of RDM UID.
-    public var devices: [MacAddress]
+    public var devices: [RdmUID]
     
     // MARK: - Initialization
     
@@ -86,7 +86,7 @@ public struct ArtTodData: ArtNetPacket, Equatable, Hashable, Codable {
                 address: Address,
                 uidTotal: UInt16 = 0,
                 blockCount: UInt8 = 0,
-                devices: [MacAddress] = []) {
+                devices: [RdmUID] = []) {
         
         self.protocolVersion = .current
         self.rdmVersion = rdmVersion

@@ -32,7 +32,7 @@ public struct ArtRdmSub: ArtNetPacket, Equatable, Hashable, Codable {
     internal let filler2: UInt8
     
     /// UID of target RDM device.
-    public let uid: MacAddress
+    public let uid: RdmUID
     
     /// Transmit as zero, receivers don’t test.
     internal let spare1: UInt8
@@ -69,7 +69,7 @@ public struct ArtRdmSub: ArtNetPacket, Equatable, Hashable, Codable {
     // MARK: - Initialization
     
     public init(rdmVersion: RdmVersion = .standard,
-                uid: MacAddress,
+                uid: RdmUID,
                 commandClass: CommandClass,
                 parameterID: UInt16,
                 subDevice: UInt16,
