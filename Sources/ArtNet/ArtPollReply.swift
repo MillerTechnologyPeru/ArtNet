@@ -92,7 +92,7 @@ public struct ArtPollReply: ArtNetPacket, Equatable, Hashable, Codable {
     /// The array is a textual report of the Node’s operating status or operational errors.
     ///
     /// It is primarily intended for ‘engineering’ data rather than ‘end user’ data. The field is formatted as: “#xxxx [yyyy..] zzzzz...”
-    /// xxxx is a hex status code as defined in Table 3. yyyy is a decimal counter that increments every time the Node sends an ArtPollResponse.
+    /// xxxx is a hex status code. yyyy is a decimal counter that increments every time the Node sends an ArtPollResponse.
     /// This allows the controller to monitor event changes in the Node.
     /// zzzz is an English text string defining the status.
     /// This is a fixed length field, although the string it contains can be shorter than the field.
@@ -260,7 +260,9 @@ public extension ArtPollReply {
         /// Indicators in Mute Mode
         case indicatorMute      = 0b10000000
         
-        public static let indicatorNormal: BitMaskOptionSet<Status1> = [.indicatorIdentify, .indicatorMute]
+        public static var indicatorNormal: BitMaskOptionSet<Status1> {
+            return [.indicatorIdentify, .indicatorMute]
+        }
     }
 }
 
