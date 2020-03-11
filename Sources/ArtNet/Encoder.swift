@@ -68,7 +68,7 @@ internal extension ArtNetEncoder {
         fileprivate(set) var formatting: ArtNetFormatting
         
         /// Output Data
-        private(set) var data: Data
+        fileprivate(set) var data: Data
         
         // MARK: - Initialization
         
@@ -410,11 +410,22 @@ internal final class ArtNetUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     /// The path of coding keys taken to get to this point in encoding.
     let codingPath: [CodingKey]
     
+    private var countOffset: Int
+    
     // MARK: - Initialization
+    
+    deinit {
+        // update count byte
+        self.encoder.data[countOffset] = UInt8(self.count)
+    }
     
     init(referencing encoder: ArtNetEncoder.Encoder) {
         self.encoder = encoder
         self.codingPath = encoder.codingPath
+        
+        // write count byte
+        self.countOffset = self.encoder.data.count
+        self.encoder.write(Data([0]))
     }
     
     // MARK: - Methods
@@ -423,7 +434,7 @@ internal final class ArtNetUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     private(set) var count: Int = 0
     
     func encodeNil() throws {
-        // do nothing
+        throw EncodingError.invalidValue(Optional<Any>.self, EncodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot encode nil in an array"))
     }
     
     func encode(_ value: Bool) throws { append(encoder.box(value)) }
@@ -455,6 +466,7 @@ internal final class ArtNetUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     func encode(_ value: UInt64) throws { append(encoder.boxNumeric(value)) }
     
     func encode <T: Encodable> (_ value: T) throws {
+        assert(count < Int(UInt8.max), "Cannot encode more than \(UInt8.max) elements")
         try encoder.writeEncodable(value)
         count += 1
     }
@@ -474,7 +486,9 @@ internal final class ArtNetUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     // MARK: - Private Methods
     
     private func append(_ data: Data) {
-        self.encoder.write(data)
+        assert(count < Int(UInt8.max), "Cannot encode more than \(UInt8.max) elements")
+        // write element data
+        encoder.write(data)
         count += 1
     }
 }

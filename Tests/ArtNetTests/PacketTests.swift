@@ -430,7 +430,13 @@ final class PacketTests: XCTestCase {
         
         let data = Data([65, 114, 116, 45, 78, 101, 116, 0, 0, 131, 0, 14, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0])
         
-        let value = ArtRdm(rdmVersion: .standard, net: 0x01, command: .arProcess, address: 0x01, rdmPacket: Data([0x00]))
+        let value = ArtRdm(
+            rdmVersion: .standard,
+            net: 0x01,
+            command: .arProcess,
+            address: 0x01,
+            rdmPacket: Data([0x00])
+        )
         
         XCTAssertEqual(value.protocolVersion, .current)
         
@@ -449,6 +455,42 @@ final class PacketTests: XCTestCase {
             XCTAssertEqual(encodedData, data)
             
             let decodedValue = try decoder.decode(ArtRdm.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtTodData() {
+        
+        let value = ArtTodData(
+            rdmVersion: .standard,
+            port: 1,
+            bindingIndex: 0,
+            net: 1,
+            command: .full,
+            address: 1,
+            uidTotal: 1,
+            blockCount: 1,
+            devices: [.init(bytes: (0,0,0,0,0,0))]
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        
+        XCTAssertEqual(value.net, value.portAddress.net)
+        XCTAssertEqual(value.rdmVersion, .standard)
+        XCTAssertNotEqual(value.rdmVersion, .draft)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, data)
+            
+            let decodedValue = try decoder.decode(ArtTodData.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
             
         } catch {
