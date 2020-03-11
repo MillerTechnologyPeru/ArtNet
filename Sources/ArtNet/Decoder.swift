@@ -105,7 +105,8 @@ internal extension ArtNetDecoder {
         func unkeyedContainer() throws -> UnkeyedDecodingContainer {
             
             log?("Requested unkeyed container for path \"\(codingPath.path)\"")
-            fatalError("Arrays not supported for ArtNet")
+            let container = try ArtNetUnkeyedDecodingContainer(referencing: self)
+            return container
         }
         
         func singleValueContainer() throws -> SingleValueDecodingContainer {
@@ -486,8 +487,8 @@ internal struct ArtNetSingleValueDecodingContainer: SingleValueDecodingContainer
         return try decoder.readDecodable(type)
     }
 }
-/*
-// MARK: UnkeyedDecodingContainer
+
+// MARK: - UnkeyedDecodingContainer
 
 internal struct ArtNetUnkeyedDecodingContainer: UnkeyedDecodingContainer {
     
@@ -504,10 +505,11 @@ internal struct ArtNetUnkeyedDecodingContainer: UnkeyedDecodingContainer {
     // MARK: Initialization
     
     /// Initializes `self` by referencing the given decoder and container.
-    init(referencing decoder: ArtNetDecoder.Decoder) {
+    init(referencing decoder: ArtNetDecoder.Decoder) throws {
         
         self.decoder = decoder
         self.codingPath = decoder.codingPath
+        self._count = try Int(self.decoder.readNumeric(UInt8.self))
     }
     
     // MARK: UnkeyedDecodingContainer
@@ -516,9 +518,7 @@ internal struct ArtNetUnkeyedDecodingContainer: UnkeyedDecodingContainer {
         return _count
     }
     
-    private var _count: Int {
-        return container.count
-    }
+    private let _count: Int
     
     var isAtEnd: Bool {
         return currentIndex >= _count
@@ -554,27 +554,21 @@ internal struct ArtNetUnkeyedDecodingContainer: UnkeyedDecodingContainer {
         self.decoder.codingPath.append(Index(intValue: self.currentIndex))
         defer { self.decoder.codingPath.removeLast() }
         
-        let item = self.container[self.currentIndex]
-        
-        let decoded = try self.decoder.unboxDecodable(item, as: type)
-        
+        let decoded = try self.decoder.readDecodable(type)
         self.currentIndex += 1
-        
         return decoded
     }
     
     mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
-        
         throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Cannot decode \(type)"))
     }
     
     mutating func nestedUnkeyedContainer() throws -> UnkeyedDecodingContainer {
-        
         throw DecodingError.typeMismatch([Any].self, DecodingError.Context(codingPath: codingPath, debugDescription: "Cannot decode unkeyed container."))
     }
     
     mutating func superDecoder() throws -> Decoder {
-        
+        /*
         // set coding key context
         self.decoder.codingPath.append(Index(intValue: currentIndex))
         defer { self.decoder.codingPath.removeLast() }
@@ -593,12 +587,13 @@ internal struct ArtNetUnkeyedDecodingContainer: UnkeyedDecodingContainer {
         
         // create new decoder
         let decoder = ArtNetDecoder.Decoder(referencing: .item(item),
-                                         at: self.decoder.codingPath,
-                                         userInfo: self.decoder.userInfo,
-                                         log: self.decoder.log,
-                                         options: self.decoder.options)
+                                            at: self.decoder.codingPath,
+                                            userInfo: self.decoder.userInfo,
+                                            log: self.decoder.log,
+                                            options: self.decoder.options)
         
-        return decoder
+        return decoder*/
+        fatalError()
     }
     
     // MARK: Private Methods
@@ -636,7 +631,7 @@ internal extension ArtNetUnkeyedDecodingContainer {
         }
     }
 }
-*/
+
 // MARK: - Decodable Types
 
 /// Private protocol for decoding ArtNet values into raw data.

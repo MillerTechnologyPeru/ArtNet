@@ -16,8 +16,7 @@ public struct ArtTodRequest: ArtNetPacket, Equatable, Hashable, Codable {
     /// ArtNet packet code.
     public static var opCode: OpCode { return .todRequest }
     
-    /// Art-Net formatting
-    public static let formatting = ArtNetFormatting()
+    // MARK: - Properties
     
     /// Art-Net protocol revision.
     public let protocolVersion: ProtocolVersion
@@ -62,6 +61,8 @@ public struct ArtTodRequest: ArtNetPacket, Equatable, Hashable, Codable {
     /// The high nibble is the Sub-Net switch. The low nibble corresponds to the Universe.
     /// This is combined with the 'Net' field above to form the 15 bit address.
     public var addresses: AddressArray
+    
+    // MARK: - Initialization
     
     public init(net: PortAddress.Net,
                 command: Command = .todFull,

@@ -5,8 +5,6 @@
 //  Created by Jorge Loc Rubio on 3/9/20.
 //
 
-import Foundation
-
 /**
  This packed is used to send RDM control parameters over Art-Net. the response is ArtTodData
  */
@@ -14,6 +12,8 @@ public struct ArtTodControl: ArtNetPacket, Equatable, Hashable, Codable {
     
     /// ArtNet packet code.
     public static var opCode: OpCode { return .todControl }
+    
+    // MARK: - Properties
         
     /// Art-Net protocol revision.
     public let protocolVersion: ProtocolVersion
@@ -54,6 +54,8 @@ public struct ArtTodControl: ArtNetPacket, Equatable, Hashable, Codable {
     /// The low byte of the 15 bit Port-Address of the DMX Port that should action this command.
     public var address: Address
     
+    // MARK: - Initialization
+    
     public init(net: PortAddress.Net,
                 command: Command = .none,
                 address: Address = 0) {
@@ -73,6 +75,8 @@ public struct ArtTodControl: ArtNetPacket, Equatable, Hashable, Codable {
         self.address = address
     }
 }
+
+// MARK: - Supporting Types
 
 // MARK: - Command
 
