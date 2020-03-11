@@ -65,19 +65,16 @@ public extension RdmUID {
 
 extension RdmUID: RawRepresentable {
     
-    /// Initialize a UID from its big endian string representation (e.g. `00:1A:7D:DA:71:13`).
+    /// Initialize a UID from its big endian string representation (e.g. `001A7DDA7113`).
     public init?(rawValue: String) {
         
         // verify string length
-        guard rawValue.utf8.count == 17
+        guard rawValue.count == 12
             else { return nil }
         
         var bytes: ByteValue = (0, 0, 0, 0, 0, 0)
         
-        let components = rawValue.components(separatedBy: ":")
-        
-        guard components.count == 6
-            else { return nil }
+        let components = (0 ..< 6).map { rawValue[rawValue.index(rawValue.startIndex, offsetBy: $0 * 2) ... rawValue.index(rawValue.startIndex, offsetBy: ($0 * 2) + 1)] }
         
         for (index, string) in components.enumerated() {
             
@@ -94,9 +91,9 @@ extension RdmUID: RawRepresentable {
         self.init(bytes: bytes)
     }
     
-    /// Convert a UID to its big endian string representation (e.g. `00:1A:7D:DA:71:13`).
+    /// Convert a UID to its big endian string representation (e.g. `001A7DDA7113`).
     public var rawValue: String {
-        return String(format: "%02X:%02X:%02X:%02X:%02X:%02X", bytes.0, bytes.1, bytes.2, bytes.3, bytes.4, bytes.5)
+        return String(format: "%02X%02X%02X%02X%02X%02X", bytes.0, bytes.1, bytes.2, bytes.3, bytes.4, bytes.5)
     }
 }
 
