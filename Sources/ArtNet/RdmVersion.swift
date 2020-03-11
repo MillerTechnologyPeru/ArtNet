@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  RDMVersion.swift
 //  
 //
 //  Created by Jorge Loc Rubio on 3/10/20.
@@ -9,9 +9,7 @@ import Foundation
 
 /**
     Art-Net Devices that only support RDM DRAFT V1.0 set field to 0x00. Devices that support RDM STANDARD V1.0 set field to 0x01
-
 */
-/// Art-Net rdm version
 public enum RdmVersion: UInt8, Codable {
     
     /// RDM DRAFT v1.0

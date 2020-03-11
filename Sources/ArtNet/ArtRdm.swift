@@ -21,10 +21,10 @@ public struct ArtRdm: ArtNetPacket, Equatable, Hashable, Codable {
     /// Art-Net protocol revision.
     public let protocolVersion: ProtocolVersion
     
-    /// Art-Net rdm version
+    /// Art-Net RDM version
     public let rdmVersion: RdmVersion
     
-    /// Pad length to match ArtPoll.
+    /// Transmit as zero, receivers don’t test.
     internal let filler2: UInt8
     
     /// Transmit as zero, receivers don’t test.
