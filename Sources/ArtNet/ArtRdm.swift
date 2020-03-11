@@ -18,6 +18,8 @@ public struct ArtRdm: ArtNetPacket, Equatable, Hashable, Codable {
         data: [CodingKeys.rdmPacket: .remainder]
     )
     
+    // MARK: - Properties
+    
     /// Art-Net protocol revision.
     public let protocolVersion: ProtocolVersion
     
@@ -60,7 +62,9 @@ public struct ArtRdm: ArtNetPacket, Equatable, Hashable, Codable {
     /// The RDM data packet excluding the DMX StartCode.
     public var rdmPacket: Data
     
-    init(rdmVersion: RdmVersion = .standard,
+    // MARK: - Initialization
+    
+    public init(rdmVersion: RdmVersion = .standard,
          net: PortAddress.Net,
          command: Command = .arProcess,
          address: Address = 0,
@@ -96,6 +100,8 @@ public extension ArtRdm {
 }
 
 // MARK: - Supporting Types
+
+// MARK: - Command
 
 public extension ArtRdm {
     
