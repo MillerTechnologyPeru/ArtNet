@@ -436,7 +436,7 @@ final class PacketTests: XCTestCase {
         let value = ArtRdm(
             rdmVersion: .standard,
             net: 0x01,
-            command: .arProcess,
+            command: .process,
             address: 0x01,
             rdmPacket: Data([0x00])
         )
@@ -448,7 +448,7 @@ final class PacketTests: XCTestCase {
         XCTAssertNotEqual(value.rdmVersion, .draft)
         
         XCTAssertEqual(value.address, Address(universe: value.portAddress.universe, subnet: value.portAddress.subnet))
-        XCTAssertEqual(value.command, .arProcess)
+        XCTAssertEqual(value.command, .process)
         
         do {
             let encodedData = try encoder.encode(value)

@@ -66,7 +66,7 @@ public struct ArtRdm: ArtNetPacket, Equatable, Hashable, Codable {
     
     public init(rdmVersion: RdmVersion = .standard,
          net: PortAddress.Net,
-         command: Command = .arProcess,
+         command: Command = .process,
          address: Address = 0,
          rdmPacket: Data) {
         
@@ -109,6 +109,6 @@ public extension ArtRdm {
     enum Command: UInt8, Codable {
         
         /// Process RDM Packet
-        case arProcess = 0x00
+        case process = 0x00
     }
 }
