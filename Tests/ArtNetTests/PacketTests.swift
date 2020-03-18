@@ -20,7 +20,8 @@ final class PacketTests: XCTestCase {
         ("testArtTodControl", testArtTodControl),
         ("testArtRdm", testArtRdm),
         ("testArtTodData",testArtTodData),
-        ("testArtRdmSub", testArtRdmSub)
+        ("testArtRdmSub", testArtRdmSub),
+        ("testFirmwareReply", testFirmwareReply)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -532,6 +533,38 @@ final class PacketTests: XCTestCase {
             XCTAssertEqual(decodedValue, value)
             
         } catch {
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testFirmwareReply() {
+        
+        let value = FirmwareReply(
+            statusCode: .allGood
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        
+        XCTAssertEqual(value.statusCode, .allGood)
+        XCTAssertNotEqual(value.statusCode, .fail)
+        XCTAssertNotEqual(value.statusCode, .blockGood)
+        
+        XCTAssertEqual(value.spare.count, 21)
+        XCTAssertEqual(value.spare, [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(FirmwareReply.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
             XCTFail(error.localizedDescription)
             dump(error)
         }
