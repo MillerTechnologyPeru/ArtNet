@@ -24,7 +24,8 @@ final class PacketTests: XCTestCase {
         ("testFirmwareReply", testFirmwareReply),
         ("testArtInput", testArtInput),
         ("testArtNzs", testArtNzs),
-        ("testArtSync", testArtSync)
+        ("testArtSync", testArtSync),
+        ("testArtAddress", testArtAddress)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -658,6 +659,40 @@ final class PacketTests: XCTestCase {
             //XCTAssertEqual(encodedData, value)
             
             let decodedValue = try decoder.decode(ArtSync.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtAddress() {
+        
+        let value = ArtAddress(
+            netSwitch: 0x01,
+            bindingIndex: 0x00,
+            shortName: "DMXController    ",
+            longName: "DMXController ,ZenController, PCBController or KeyPadController",
+            inputAddresses: [0x01],
+            outputAddresses: [0x01],
+            subSwitch: 0x00,
+            video: 0x00,
+            command: .none
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        XCTAssertEqual(value.inputAddresses.description, "[0x01, 0x00, 0x00, 0x00]")
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtAddress.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
             
         } catch {
