@@ -21,7 +21,8 @@ final class PacketTests: XCTestCase {
         ("testArtRdm", testArtRdm),
         ("testArtTodData",testArtTodData),
         ("testArtRdmSub", testArtRdmSub),
-        ("testFirmwareReply", testFirmwareReply)
+        ("testFirmwareReply", testFirmwareReply),
+        ("testArtInput", testArtInput)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -222,7 +223,7 @@ final class PacketTests: XCTestCase {
     
     func testArtPollReplyChannel() {
         
-        let portTypes: ArtPollReply.ChannelArray<ArtPollReply.Channel> = [
+        let portTypes: ChannelArray<ArtPollReply.Channel> = [
             .init(channelProtocol: .dmx512),
             .init(),
             .init(channelProtocol: .artNet, input: true, output: false)
@@ -568,6 +569,40 @@ final class PacketTests: XCTestCase {
             XCTFail(error.localizedDescription)
             dump(error)
         }
+    }
+    
+    func testArtInput() {
+        
+        let value = ArtInput(
+            bindingIndex: 0x00,
+            ports: 0x0000,
+            inputs: [.enable, .disable, .init(value: 0x10), .init(value: 0xff)]
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        
+        XCTAssertEqual(value.bindingIndex, 0)
+        XCTAssertEqual(value.ports, 0)
+        XCTAssertEqual(value.inputs.count, 4)
+        XCTAssertEqual(value.inputs, [.enable, .disable, .disable, .disable])
+        XCTAssertEqual(value.inputs, [.init(value: 0x00), .init(value: 0xff), .init(value: 0xff), .init(value: 0xff)])
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtInput.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+        
     }
 }
 
