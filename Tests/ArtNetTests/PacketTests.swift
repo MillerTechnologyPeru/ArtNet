@@ -22,7 +22,8 @@ final class PacketTests: XCTestCase {
         ("testArtTodData",testArtTodData),
         ("testArtRdmSub", testArtRdmSub),
         ("testFirmwareReply", testFirmwareReply),
-        ("testArtInput", testArtInput)
+        ("testArtInput", testArtInput),
+        ("testArtNzs", testArtNzs)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -603,6 +604,43 @@ final class PacketTests: XCTestCase {
             dump(error)
         }
         
+    }
+    
+    func testArtNzs() {
+        
+        let lightingData = Data([UInt8](repeating: 0x00, count: 512))
+        
+        XCTAssertEqual(lightingData.count, 512)
+        
+        let value = ArtNzs(
+            sequence: 0x00,
+            startCode: 0xCC,
+            portAddress: PortAddress(universe: 0x01, subnet: 0x00, net: 0x01),
+            lightingData: lightingData
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        
+        XCTAssertEqual(value.sequence, 0)
+        XCTAssertEqual(value.startCode, 204)
+        XCTAssertEqual(value.portAddress.net, 1)
+        XCTAssertEqual(value.lightingData.count, 512)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtNzs.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
     }
 }
 
