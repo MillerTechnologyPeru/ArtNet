@@ -28,7 +28,8 @@ final class PacketTests: XCTestCase {
         ("testArtAddress", testArtAddress),
         ("testArtDiagData", testArtDiagData),
         ("testArtTimeCode", testArtTimeCode),
-        ("testArtCommand", testArtCommand)
+        ("testArtCommand", testArtCommand),
+        ("testArtTrigger", testArtTrigger)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -789,6 +790,37 @@ final class PacketTests: XCTestCase {
             //XCTAssertEqual(encodedData, value)
             
             let decodedValue = try decoder.decode(ArtCommand.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtTrigger() {
+        
+        let value = ArtTrigger(
+            oem: OEMCode(rawValue: 0xffff),
+            key: .undefined,
+            subKey: 0,
+            payload: []
+        )
+        
+        XCTAssertEqual(value.key, ArtTrigger.TriggerKey(value: 0x05))
+        XCTAssertEqual(value.key, ArtTrigger.TriggerKey(value: 0xff))
+        XCTAssertNotEqual(value.key, ArtTrigger.TriggerKey(value: 0x00))
+        XCTAssertEqual(value.payload.count, 0)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtTrigger.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
             
         } catch {
