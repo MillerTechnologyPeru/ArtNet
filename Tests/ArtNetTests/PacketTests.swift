@@ -27,6 +27,7 @@ final class PacketTests: XCTestCase {
         ("testArtSync", testArtSync),
         ("testArtAddress", testArtAddress),
         ("testArtDiagData", testArtDiagData),
+        ("testArtTimeCode", testArtTimeCode)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -721,6 +722,46 @@ final class PacketTests: XCTestCase {
             //XCTAssertEqual(encodedData, value)
             
             let decodedValue = try decoder.decode(DiagnosticData.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtTimeCode() {
+        
+        let value = ArtTimeCode(
+            frames: .max,
+            seconds: .min,
+            minutes: .init(integerLiteral: 0xff),
+            hours: .init(integerLiteral: 0x3c),
+            keyType: .ebu
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        XCTAssertEqual(value.frames, 29)
+        XCTAssertEqual(value.seconds, 0)
+        XCTAssertEqual(value.minutes, 59)
+        XCTAssertEqual(value.hours, 59)
+        XCTAssertEqual(value.hours, 0x3b)
+        XCTAssertEqual(value.frames, ArtTimeCode.FrameTime.max)
+        XCTAssertNotEqual(value.frames, ArtTimeCode.FrameTime.min)
+        XCTAssertEqual(value.seconds, ArtTimeCode.Time.min)
+        XCTAssertNotEqual(value.seconds, ArtTimeCode.Time.max)
+        
+        XCTAssertNotEqual(value.keyType, .film)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtTimeCode.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
             
         } catch {
