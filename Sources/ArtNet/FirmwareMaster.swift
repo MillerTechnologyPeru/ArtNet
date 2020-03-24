@@ -14,6 +14,13 @@ public struct FirmwareMaster:  ArtNetPacket, Equatable, Hashable, Codable {
    
    /// ArtNet packet code.
    public static var opCode: OpCode { return .firmwareMaster }
+    
+    /// Art-Net formatting
+    public static let formatting = ArtNetFormatting(
+        data: [
+            CodingKeys.data: .remainder
+        ]
+    )
    
     // MARK: - Properties
 
@@ -79,13 +86,19 @@ public extension FirmwareMaster {
 
 // MARK: - Firmware
 
+/**
+    This Int64 parameter describes the total number of words (Int16) in the firmware upload plus the firmware header size.
+     Eg a 32K word upload plus 530 words of header information == 0x00008212.
+ 
+    This value is also  the file size (in words) of the file to be uploaded.
+ */
 public extension FirmwareMaster {
     
     struct Firmware: RawRepresentable, Equatable, Hashable, Codable {
         
-        public let rawValue: UInt64
+        public let rawValue: UInt32
         
-        public init(rawValue: UInt64) {
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
     }
