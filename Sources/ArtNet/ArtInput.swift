@@ -49,10 +49,9 @@ public struct ArtInput: ArtNetPacket, Equatable, Hashable, Codable {
     
     // MARK: - Initialization
     
-    public init(
-        bindingIndex: UInt8,
-        ports: UInt16,
-        inputs: ChannelArray<InputStatus> = [.enable, .enable, .enable, .enable]) {
+    public init(bindingIndex: UInt8,
+                ports: UInt16,
+                inputs: ChannelArray<InputStatus> = [.enable, .enable, .enable, .enable]) {
         
         self.protocolVersion = .current
         self.filler1 = 0
