@@ -13,7 +13,7 @@ import Foundation
  The ArtIpProg packet is sent by a Controller to the private address of a Node. If the Node supports remote programming of IP address, it will respond with an ArtIpProgReply packet.
  In all scenarios, the ArtIpProgReply is send to the private address of the sender.
  */
-public struct IpProgram: ArtNetPacket, Equatable, Hashable, Codable {
+public struct ArtIpProg: ArtNetPacket, Equatable, Hashable, Codable {
     
     /// ArtNet packet code.
     public static var opCode: OpCode { return .ipProgram }
@@ -42,7 +42,7 @@ public struct IpProgram: ArtNetPacket, Equatable, Hashable, Codable {
     public var subnet: SubnetMask
     
     /// (Deprecated)
-    public var port: UInt16
+    internal let port: UInt16
     
     /// Transmit as zero, receivers dont test.
     internal let spare1: UInt8
@@ -72,8 +72,7 @@ public struct IpProgram: ArtNetPacket, Equatable, Hashable, Codable {
     
     public init(command: BitMaskOptionSet<Command> = [],
                 ip: NetworkAddress.IPv4,
-                subnet: SubnetMask,
-                port: UInt16 = 0) {
+                subnet: SubnetMask) {
         
         self.protocolVersion = .current
         self.filler1 = 0
@@ -82,7 +81,7 @@ public struct IpProgram: ArtNetPacket, Equatable, Hashable, Codable {
         self.filler4 = 0
         self.ip = ip
         self.subnet = subnet
-        self.port = port
+        self.port = 0
         self.spare1 = 0
         self.spare2 = 0
         self.spare3 = 0
@@ -94,13 +93,11 @@ public struct IpProgram: ArtNetPacket, Equatable, Hashable, Codable {
     }
 }
 
-public typealias ArtIpProg = IpProgram
-
 // MARK: - Supporting Types
 
 // MARK: - Command
 
-public extension IpProgram {
+public extension ArtIpProg {
     
     /// Defines the how this packet is processed.
     /// If all bits are clear, this is an enquiry only.
@@ -117,12 +114,6 @@ public extension IpProgram {
         
         /// Set to return all three parameters to default
         case setDefault         = 0b00001000
-        
-        /// Not used, transmit as zero
-        case filler1            = 0b00010000
-        
-        /// Not used, transmit as zero
-        case filler2            = 0b00100000
         
         /// Set to enable DHCP (if set ignore lower bits).
         case enableDHCP         = 0b01000000

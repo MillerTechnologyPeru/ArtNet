@@ -833,11 +833,11 @@ final class PacketTests: XCTestCase {
     
     func testArtIpProg() {
         
-        let value = IpProgram(
+        let value = ArtIpProg(
             command: [.setDefault],
             ip: NetworkAddress.IPv4(rawValue: "192.168.0.0")!,
-            subnet: SubnetMask.classA,
-            port: 0)
+            subnet: SubnetMask.classA
+        )
         
         XCTAssertEqual(value.command, [.setDefault])
     
@@ -848,7 +848,7 @@ final class PacketTests: XCTestCase {
             XCTAssertFalse(encodedData.isEmpty)
             //XCTAssertEqual(encodedData, value)
             
-            let decodedValue = try decoder.decode(IpProgram.self, from: encodedData)
+            let decodedValue = try decoder.decode(ArtIpProg.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
             
         } catch {
