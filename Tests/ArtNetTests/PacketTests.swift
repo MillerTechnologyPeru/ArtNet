@@ -31,6 +31,7 @@ final class PacketTests: XCTestCase {
         ("testArtCommand", testArtCommand),
         ("testArtTrigger", testArtTrigger),
         ("testArtIpProg", testArtIpProg),
+        ("testFirmwareMaster", testFirmwareMaster)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -849,6 +850,52 @@ final class PacketTests: XCTestCase {
             //XCTAssertEqual(encodedData, value)
             
             let decodedValue = try decoder.decode(ArtIpProg.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testFirmwareMaster() {
+        
+        let value = FirmwareMaster(
+            firmwareType: .firmwareFirst,
+            blockId: 0x00,
+            firmwareLength: .init(length3: 0x00, length2: 0x00, length1: 0x02, length0: 0x00),
+            data: Data([UInt8](repeating: 0x00, count: 1024)))
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        XCTAssertEqual(value.firmwareType.rawValue, 0x00)
+        XCTAssertEqual(value.blockId, 0x00)
+        
+        dump(value.firmwareLength)
+        dump(value.firmwareLength.rawValue)
+        
+        dump(value.firmwareLength.rawValue.bytes.0)
+        dump(value.firmwareLength.rawValue.bytes.1)
+        dump(value.firmwareLength.rawValue.bytes.2)
+        dump(value.firmwareLength.rawValue.bytes.3)
+        
+        
+        XCTAssertEqual(value.firmwareLength.rawValue, 512)
+        XCTAssertEqual(value.firmwareLength, FirmwareMaster.FirmwareLength(rawValue: 512))
+        let testData = [UInt16](repeating: 0x00, count: 512)
+        XCTAssertEqual(value.firmwareData.count, testData.count)
+        XCTAssertEqual(value.firmwareData, [UInt16](repeating: 0x00, count: 512))
+        
+        XCTAssertNotNil(value.data)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(FirmwareMaster.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
             
         } catch {

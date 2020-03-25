@@ -34,14 +34,14 @@ public struct FirmwareMaster:  ArtNetPacket, Equatable, Hashable, Codable {
     internal let filler2: UInt8
     
     /// Defines the packet contents
-    public var type: firmwareType
+    public var firmwareType: firmwareType
     
     /// Counts the consecutive blocks of firmware upload.
     /// Stating at `0x00` for the `firmwareFirst` or `ubeaFirst` packet.
     public var blockId: UInt8
     
-    /// Firmware
-    public var firmware: Firmware
+    /// Firmware length
+    public var firmwareLength: FirmwareLength
     
     /// Controller sets to zero, Node does not test.
     internal let spare: [UInt8]
@@ -52,7 +52,34 @@ public struct FirmwareMaster:  ArtNetPacket, Equatable, Hashable, Codable {
     public var data: Data
     
     // MARK: - Initialization
+    public init(firmwareType: firmwareType,
+                blockId: UInt8,
+                firmwareLength: FirmwareLength,
+                data: Data) {
+        
+        self.protocolVersion = .current
+        self.filler1 = 0
+        self.filler2 = 0
+        self.firmwareType = firmwareType
+        self.blockId = blockId
+        self.firmwareLength = firmwareLength
+        self.spare = [UInt8](repeating: 0, count: 20)
+        self.data = data
+    }
+}
+
+public extension FirmwareMaster {
     
+    var firmwareData: [UInt16] {
+        let size = dataSize
+        guard size > 0,
+              data.count == size * 2
+            else { return [] }
+        return (0 ..< size)
+            .map { UInt16(bigEndian: UInt16(bytes: (data[$0], data[$0 + 1]))) }
+    }
+    
+    internal var dataSize: Int { return Int(firmwareLength.rawValue) }
 }
 
 // MARK: - Supporting Types
@@ -94,12 +121,17 @@ public extension FirmwareMaster {
  */
 public extension FirmwareMaster {
     
-    struct Firmware: RawRepresentable, Equatable, Hashable, Codable {
+    struct FirmwareLength: RawRepresentable, Equatable, Hashable, Codable {
         
         public let rawValue: UInt32
         
         public init(rawValue: UInt32) {
             self.rawValue = rawValue
+        }
+        
+        /// - Parameter length0: LSB
+        public init(length3: UInt8, length2:UInt8, length1: UInt8, length0: UInt8) {
+            self.rawValue = UInt32(bigEndian: UInt32(bytes: (length3, length2, length1, length0)))
         }
     }
 }
