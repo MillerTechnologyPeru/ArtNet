@@ -31,7 +31,8 @@ final class PacketTests: XCTestCase {
         ("testArtCommand", testArtCommand),
         ("testArtTrigger", testArtTrigger),
         ("testArtIpProg", testArtIpProg),
-        ("testFirmwareMaster", testFirmwareMaster)
+        ("testFirmwareMaster", testFirmwareMaster),
+        ("testArtIpProgReply", testArtIpProgReply)
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -896,6 +897,31 @@ final class PacketTests: XCTestCase {
             //XCTAssertEqual(encodedData, value)
             
             let decodedValue = try decoder.decode(FirmwareMaster.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtIpProgReply() {
+        
+        let value = ArtIpProgReply(
+            ip: NetworkAddress.IPv4(rawValue: "192.169.0.1")!,
+            subnet: SubnetMask(rawValue: "255.255.255.0")!,
+            status: .dhcpEnabled
+        )
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtIpProgReply.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
             
         } catch {
