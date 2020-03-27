@@ -17,10 +17,10 @@ public struct ArtVlc: ArtNetPacket, Equatable, Hashable, Codable {
     /// ArtNet packet code.
     public static var opCode: OpCode { return .nzs }
     
-    /*public static let formatting = ArtNetFormatting(
+    public static let formatting = ArtNetFormatting(
         littleEndian: [CodingKeys.portAddress],
-        data: [CodingKeys.vlcData: .lengthSpecifier]
-    )*/
+        data: [CodingKeys.data: .lengthSpecifier]
+    )
     
     // MARK: - Properties
     
@@ -36,7 +36,7 @@ public struct ArtVlc: ArtNetPacket, Equatable, Hashable, Codable {
     public var sequence: UInt8
     
     /// The DMX512 start code of this packet is set to `0x91` No other values are allowed.
-    public let startCode: UInt8
+    internal let startCode: UInt8
     
     /// 15 bit Port-Address to which this packet is destined.
     public var portAddress: PortAddress
@@ -47,9 +47,22 @@ public struct ArtVlc: ArtNetPacket, Equatable, Hashable, Codable {
     public var length: UInt16
     
     /// A variable lenght Array of VLC data
-    public var data: [UInt8]
+    public var data: VlcData
     
     // MARK: - Initialization
+    
+    public init(sequence: UInt8,
+                portAddress: PortAddress,
+                length: UInt16,
+                data: VlcData) {
+        
+        self.protocolVersion = .current
+        self.sequence = sequence
+        self.startCode = 0x91
+        self.portAddress = portAddress
+        self.length = length
+        self.data = data
+    }
 }
 
 // MARK: - Supporting Types
@@ -58,13 +71,13 @@ public struct ArtVlc: ArtNetPacket, Equatable, Hashable, Codable {
 
 public extension ArtVlc {
     
-    struct VlcArrayData: Equatable, Hashable, Codable {
+    struct VlcData: Equatable, Hashable, Codable {
     
         /// Magic number used to identify this packet `0x41` high bit, `0x4C` low bit
-        internal let manId: UInt16 // { return UInt16(bigEndian: UInt16(bytes: 0x41, 0x4C)) }
+        internal let manId: UInt16
         
         /// Magic number used to identify this packet `0x45`
-        internal let subCode: Int8 // { return 0x45 }
+        internal let subCode: UInt8 // { return 0x45 }
         
         /// VLC Flags
         public var flags: BitMaskOptionSet<VlcFlags>
@@ -86,7 +99,7 @@ public extension ArtVlc {
         public var payloadChecksum: UInt16
         
         /// Transmit as zero, receive does not check.
-        public var spare1: UInt8
+        internal let spare1: UInt8
         
         /// The 8-bit VLC modulation depth expressed as a percentage in the range 1 to 100.
         /// A value of `0` indicates that the transmitter should use its default value
@@ -112,22 +125,151 @@ public extension ArtVlc {
         public var payload: Data
         
         // MARK: - Initialization
+        
+        public init(flags: BitMaskOptionSet<VlcFlags>,
+                    transaction: UInt16,
+                    slotAddress: UInt16,
+                    payloadCount: UInt16,
+                    payloadChecksum: UInt16,
+                    depth: UInt8,
+                    frequency: UInt16,
+                    modulation: UInt16,
+                    languageCode: LanguageCodes,
+                    beaconRepeat: UInt16,
+                    payload: Data) {
+            
+            // 0 - 1
+            self.manId = UInt16(bigEndian: UInt16(bytes: (0x41, 0x4C)))
+            // 2
+            self.subCode = 0x45
+            // 3
+            self.flags = flags
+            // 4 - 5
+            self.transaction = transaction
+            // 6 - 7
+            self.slotAddress = slotAddress
+            // 8 - 9
+            self.payloadCount = payloadCount
+            // 10 - 11
+            self.payloadChecksum = payloadChecksum
+            // 12
+            self.spare1 = 0
+            // 13
+            self.depth = depth
+            // 14 - 15
+            self.frequency = frequency
+            // 16 - 17
+            self.modulation = modulation
+            // 18 - 19
+            self.languageCode = languageCode
+            // 20 - 21
+            self.beaconRepeat = beaconRepeat
+            // 22 - 502?
+            self.payload = payload
+        }
     }
 }
 
 public extension ArtVlc {
     
-    var vlcData: [UInt8]
+    var vlcArrayData: [UInt8] {
+        let size = dataSize
+        guard size > 0 && size <= 502
+            else { return [] }
+        
+        var array: [UInt8] = []
+        for index:Int in 0 ..< size {
+            /// manId
+            if index == 0 {
+                array.append(data.manId.bytes.1)
+                array.append(data.manId.bytes.0)
+            }
+            
+            /// subCode
+            if index == 2 {
+                array.append(data.subCode)
+            }
+            
+            /// flags
+            if index == 3 {
+                array.append(data.flags.rawValue)
+            }
+            
+            /// transaction
+            if index == 4 {
+                array.append(data.transaction.bytes.1)
+                array.append(data.transaction.bytes.0)
+            }
+            
+            /// slotAddress
+            if index == 6 {
+                array.append(data.slotAddress.bytes.1)
+                array.append(data.slotAddress.bytes.0)
+            }
+            
+            /// payloadCount
+            if index == 8 {
+                array.append(data.payloadCount.bytes.1)
+                array.append(data.payloadCount.bytes.0)
+            }
+            
+            /// payloadChecksum
+            if index == 10 {
+                array.append(data.payloadChecksum.bytes.1)
+                array.append(data.payloadChecksum.bytes.0)
+            }
+            
+            /// spare1
+            if index == 12 {
+                array.append(data.spare1)
+            }
+            
+            /// depth
+            if index == 13 {
+                array.append(data.depth)
+            }
+            
+            /// frequency
+            if index == 14 {
+                array.append(data.frequency.bytes.1)
+                array.append(data.frequency.bytes.0)
+            }
+            
+            /// modulation
+            if index == 16 {
+                array.append(data.modulation.bytes.1)
+                array.append(data.modulation.bytes.0)
+            }
+            
+            /// languageCode
+            if index == 18 {
+                array.append(data.languageCode.rawValue.bytes.1)
+                array.append(data.languageCode.rawValue.bytes.0)
+            }
+            
+            /// beaconRepeat
+            if index == 20 {
+                array.append(data.beaconRepeat.bytes.1)
+                array.append(data.beaconRepeat.bytes.0)
+            }
+            
+            /// payload
+            if index == 22 {
+                array.append(contentsOf: Array(data.payload))
+                break
+            }
+        }
+        return array
+    }
     
     internal var dataSize: Int { return Int(length) }
 }
-
 
 // MARK: VLCArray Supporting Types
 
 // MARK: VLC Flags
 
-public extension ArtVlc.VlcArrayData {
+public extension ArtVlc.VlcData {
     
     /// Bit fields used to control VLC operations.
     
@@ -153,7 +295,7 @@ public extension ArtVlc.VlcArrayData {
 
 // MARK: Language Codes
 
-public extension ArtVlc.VlcArrayData {
+public extension ArtVlc.VlcData {
     
     enum LanguageCodes: UInt16, Codable {
         

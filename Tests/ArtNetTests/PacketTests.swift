@@ -32,7 +32,8 @@ final class PacketTests: XCTestCase {
         ("testArtTrigger", testArtTrigger),
         ("testArtIpProg", testArtIpProg),
         ("testFirmwareMaster", testFirmwareMaster),
-        ("testArtIpProgReply", testArtIpProgReply)
+        ("testArtIpProgReply", testArtIpProgReply),
+        ("testArtVlc", testArtVlc),
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -923,6 +924,57 @@ final class PacketTests: XCTestCase {
             
             let decodedValue = try decoder.decode(ArtIpProgReply.self, from: encodedData)
             XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtVlc() {
+        
+        let value = ArtVlc(
+            sequence: 0x00,
+            portAddress: PortAddress.init(
+                universe: 0x00,
+                subnet: 0x00,
+                net: 0x01
+            ),
+            length: 0x07A,
+            data: ArtVlc.VlcData(
+                flags: [.beacon],
+                transaction: 0x0102,
+                slotAddress: 0x0304,
+                payloadCount: 0x0506,
+                payloadChecksum: 0x0708,
+                depth: 0x09,
+                frequency: 0x0A0B,
+                modulation: 0x0C0D,
+                languageCode: .beaconText,
+                beaconRepeat: 0x0F10,
+                payload: Data([UInt8](repeating: 0x00, count: 100))
+            )
+        )
+        
+        XCTAssertFalse(value.vlcArrayData.isEmpty)
+        dump(value.data)
+        dump(value.vlcArrayData)
+        
+        XCTAssertEqual(value.vlcArrayData.count, Int(value.length))
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtVlc.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+            XCTAssertEqual(decodedValue.vlcArrayData.count, value.vlcArrayData.count)
+            XCTAssertEqual(decodedValue.vlcArrayData, value.vlcArrayData)
             
         } catch {
             
