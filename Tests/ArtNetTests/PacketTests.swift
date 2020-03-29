@@ -20,7 +20,20 @@ final class PacketTests: XCTestCase {
         ("testArtTodControl", testArtTodControl),
         ("testArtRdm", testArtRdm),
         ("testArtTodData",testArtTodData),
-        ("testArtRdmSub", testArtRdmSub)
+        ("testArtRdmSub", testArtRdmSub),
+        ("testFirmwareReply", testFirmwareReply),
+        ("testArtInput", testArtInput),
+        ("testArtNzs", testArtNzs),
+        ("testArtSync", testArtSync),
+        ("testArtAddress", testArtAddress),
+        ("testArtDiagData", testArtDiagData),
+        ("testArtTimeCode", testArtTimeCode),
+        ("testArtCommand", testArtCommand),
+        ("testArtTrigger", testArtTrigger),
+        ("testArtIpProg", testArtIpProg),
+        ("testFirmwareMaster", testFirmwareMaster),
+        ("testArtIpProgReply", testArtIpProgReply),
+        ("testArtVlc", testArtVlc),
     ]
     
     lazy var encoder: ArtNetEncoder = {
@@ -221,7 +234,7 @@ final class PacketTests: XCTestCase {
     
     func testArtPollReplyChannel() {
         
-        let portTypes: ArtPollReply.ChannelArray<ArtPollReply.Channel> = [
+        let portTypes: ChannelArray<ArtPollReply.Channel> = [
             .init(channelProtocol: .dmx512),
             .init(),
             .init(channelProtocol: .artNet, input: true, output: false)
@@ -532,6 +545,439 @@ final class PacketTests: XCTestCase {
             XCTAssertEqual(decodedValue, value)
             
         } catch {
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testFirmwareReply() {
+        
+        let value = FirmwareReply(
+            statusCode: .allGood
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        
+        XCTAssertEqual(value.statusCode, .allGood)
+        XCTAssertNotEqual(value.statusCode, .fail)
+        XCTAssertNotEqual(value.statusCode, .blockGood)
+        
+        XCTAssertEqual(value.spare.count, 21)
+        XCTAssertEqual(value.spare, [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(FirmwareReply.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtInput() {
+        
+        let value = ArtInput(
+            bindingIndex: 0x00,
+            ports: 0x0000,
+            inputs: [.enable, .disable, .init(value: 0x10), .init(value: 0xff)]
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        
+        XCTAssertEqual(value.bindingIndex, 0)
+        XCTAssertEqual(value.ports, 0)
+        XCTAssertEqual(value.inputs.count, 4)
+        XCTAssertEqual(value.inputs, [.enable, .disable, .disable, .disable])
+        XCTAssertEqual(value.inputs, [.init(value: 0x00), .init(value: 0xff), .init(value: 0xff), .init(value: 0xff)])
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtInput.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+        
+    }
+    
+    func testArtNzs() {
+        
+        let lightingData = Data([UInt8](repeating: 0x00, count: 512))
+        
+        XCTAssertEqual(lightingData.count, 512)
+        
+        let value = ArtNzs(
+            sequence: 0x00,
+            startCode: 0xCC,
+            portAddress: PortAddress(universe: 0x01, subnet: 0x00, net: 0x01),
+            lightingData: lightingData
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        
+        XCTAssertEqual(value.sequence, 0)
+        XCTAssertEqual(value.startCode, 204)
+        XCTAssertEqual(value.portAddress.net, 1)
+        XCTAssertEqual(value.lightingData.count, 512)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtNzs.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtSync() {
+        
+        let value = ArtSync()
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtSync.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtAddress() {
+        
+        let value = ArtAddress(
+            netSwitch: 0x01,
+            bindingIndex: 0x00,
+            shortName: "DMXController    ",
+            longName: "DMXController ,ZenController, PCBController or KeyPadController",
+            inputAddresses: [0x01],
+            outputAddresses: [0x01],
+            subSwitch: 0x00,
+            video: 0x00,
+            command: .none
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        XCTAssertEqual(value.inputAddresses.description, "[0x01, 0x00, 0x00, 0x00]")
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtAddress.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtDiagData() {
+        
+        let value = DiagnosticData(
+            priority: .critical,
+            data: Data([0x00])
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        XCTAssertNotEqual(value.priority, .volatile)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(DiagnosticData.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtTimeCode() {
+        
+        let value = ArtTimeCode(
+            frames: .max,
+            seconds: .min,
+            minutes: .init(integerLiteral: 0xff),
+            hours: .init(integerLiteral: 0x3c),
+            keyType: .ebu
+        )
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        XCTAssertEqual(value.frames, 29)
+        XCTAssertEqual(value.seconds, 0)
+        XCTAssertEqual(value.minutes, 59)
+        XCTAssertEqual(value.hours, 59)
+        XCTAssertEqual(value.hours, 0x3b)
+        XCTAssertEqual(value.frames, ArtTimeCode.FrameTime.max)
+        XCTAssertNotEqual(value.frames, ArtTimeCode.FrameTime.min)
+        XCTAssertEqual(value.seconds, ArtTimeCode.Time.min)
+        XCTAssertNotEqual(value.seconds, ArtTimeCode.Time.max)
+        
+        XCTAssertNotEqual(value.keyType, .film)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtTimeCode.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtCommand() {
+        
+        let value = ArtCommand(
+            estaCode: ESTACode(rawValue: 0xffff),
+            data: Data([UInt8](repeating: 0x00, count: 512))
+        )
+        
+        XCTAssertEqual(value.data.count, 512)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtCommand.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtTrigger() {
+        
+        let value = ArtTrigger(
+            oem: OEMCode(rawValue: 0xffff),
+            key: .undefined,
+            subKey: 0,
+            payload: []
+        )
+        
+        XCTAssertEqual(value.key, ArtTrigger.TriggerKey(value: 0x05))
+        XCTAssertEqual(value.key, ArtTrigger.TriggerKey(value: 0xff))
+        XCTAssertNotEqual(value.key, ArtTrigger.TriggerKey(value: 0x00))
+        XCTAssertEqual(value.payload.count, 0)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtTrigger.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtIpProg() {
+        
+        let value = ArtIpProg(
+            command: [.setDefault],
+            ip: NetworkAddress.IPv4(rawValue: "192.168.0.0")!,
+            subnet: SubnetMask.classA
+        )
+        
+        XCTAssertEqual(value.command, [.setDefault])
+    
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtIpProg.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testFirmwareMaster() {
+        
+        let value = FirmwareMaster(
+            firmwareType: .firmwareFirst,
+            blockId: 0x00,
+            firmwareLength: .init(length3: 0x00, length2: 0x00, length1: 0x02, length0: 0x00),
+            data: Data([UInt8](repeating: 0x00, count: 1024)))
+        
+        XCTAssertEqual(value.protocolVersion, .current)
+        XCTAssertEqual(value.firmwareType.rawValue, 0x00)
+        XCTAssertEqual(value.blockId, 0x00)
+        
+        dump(value.firmwareLength)
+        dump(value.firmwareLength.rawValue)
+        
+        dump(value.firmwareLength.rawValue.bytes.0)
+        dump(value.firmwareLength.rawValue.bytes.1)
+        dump(value.firmwareLength.rawValue.bytes.2)
+        dump(value.firmwareLength.rawValue.bytes.3)
+        
+        
+        XCTAssertEqual(value.firmwareLength.rawValue, 512)
+        XCTAssertEqual(value.firmwareLength, FirmwareMaster.FirmwareLength(rawValue: 512))
+        let testData = [UInt16](repeating: 0x00, count: 512)
+        XCTAssertEqual(value.firmwareData.count, testData.count)
+        XCTAssertEqual(value.firmwareData, [UInt16](repeating: 0x00, count: 512))
+        
+        XCTAssertNotNil(value.data)
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(FirmwareMaster.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtIpProgReply() {
+        
+        let value = ArtIpProgReply(
+            ip: NetworkAddress.IPv4(rawValue: "192.169.0.1")!,
+            subnet: SubnetMask(rawValue: "255.255.255.0")!,
+            status: .dhcpEnabled
+        )
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtIpProgReply.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+        } catch {
+            
+            XCTFail(error.localizedDescription)
+            dump(error)
+        }
+    }
+    
+    func testArtVlc() {
+        
+        let value = ArtVlc(
+            sequence: 0x00,
+            portAddress: PortAddress.init(
+                universe: 0x00,
+                subnet: 0x00,
+                net: 0x01
+            ),
+            length: 0x07A,
+            data: ArtVlc.VlcData(
+                flags: [.beacon],
+                transaction: 0x0102,
+                slotAddress: 0x0304,
+                payloadCount: 0x0506,
+                payloadChecksum: 0x0708,
+                depth: 0x09,
+                frequency: 0x0A0B,
+                modulation: 0x0C0D,
+                languageCode: .beaconText,
+                beaconRepeat: 0x0F10,
+                payload: Data([UInt8](repeating: 0x00, count: 100))
+            )
+        )
+        
+        XCTAssertFalse(value.vlcArrayData.isEmpty)
+        dump(value.data)
+        dump(value.vlcArrayData)
+        
+        XCTAssertEqual(value.vlcArrayData.count, Int(value.length))
+        
+        do {
+            let encodedData = try encoder.encode(value)
+            print(encodedData.hexString)
+            
+            XCTAssertFalse(encodedData.isEmpty)
+            //XCTAssertEqual(encodedData, value)
+            
+            let decodedValue = try decoder.decode(ArtVlc.self, from: encodedData)
+            XCTAssertEqual(decodedValue, value)
+            
+            XCTAssertEqual(decodedValue.vlcArrayData.count, value.vlcArrayData.count)
+            XCTAssertEqual(decodedValue.vlcArrayData, value.vlcArrayData)
+            
+        } catch {
+            
             XCTFail(error.localizedDescription)
             dump(error)
         }
