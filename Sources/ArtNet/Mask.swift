@@ -170,7 +170,13 @@ extension SubnetMask: RawRepresentable {
     
     /// Convert a Subnet Mask to its big endian string representation (e.g. `255.255.255.0`).
     public var rawValue: String {
-        return String(format: "%@.%@.%@.%@", String(bytes.0), String(bytes.1), String(bytes.2), String(bytes.3))
+        return bytes.0.description
+            + "."
+            + bytes.1.description
+            + "."
+            + bytes.2.description
+            + "."
+            + bytes.3.description
     }
 }
 
