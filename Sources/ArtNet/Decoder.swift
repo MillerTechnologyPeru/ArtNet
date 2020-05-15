@@ -152,20 +152,22 @@ internal extension ArtNetDecoder.Decoder {
         let key = self.codingPath.last
         let encoding = key.flatMap { formatting.string[.init($0)] } ?? .variableLength
         let length: Int
+        let data: Data
         // get string indices in data
         switch encoding {
         case .variableLength:
-            guard let end = self.data.suffixNoCopy(from: offset)
-                .firstIndex(of: 0x00)
-                else {
+            guard let end = self.data
+                .suffixNoCopy(from: offset)
+                .firstIndex(of: 0x00) else {
                 throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: self.codingPath, debugDescription: "Missing null terminator for string starting at offset \(offset)"))
             }
-            length = end - offset + 1
+            length = end
+            data = try read(length)
+            self.offset += 1 // for null terminator
         case let .fixedLength(fixedLength):
             length = fixedLength
+            data = try read(length)
         }
-        // read data and parse string
-        let data = try read(length)
         guard let string = data.withUnsafeBytes({
             $0.baseAddress.flatMap { String(validatingUTF8: $0.assumingMemoryBound(to: CChar.self)) }
         }) else {
@@ -174,6 +176,7 @@ internal extension ArtNetDecoder.Decoder {
             })
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: self.codingPath, debugDescription: "Invalid string \"\(invalidString)\" at offset \(offset)"))
         }
+                
         return string
     }
     
