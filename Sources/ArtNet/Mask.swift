@@ -215,6 +215,8 @@ extension SubnetMask: CustomStringConvertible {
 
 extension SubnetMask: Sequence {
     
+    public typealias Element = UInt8
+    
     public func makeIterator() -> IndexingIterator<Self> {
         return IndexingIterator(_elements: self)
     }
